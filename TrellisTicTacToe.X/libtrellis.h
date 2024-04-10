@@ -31,7 +31,7 @@ extern "C" {
     
     void trellis_init(void);
     
-    void set_recorded_edges(char num, char edges);
+    void set_keypad_events(char num, char edges);
     void get_button_events(unsigned char *buffer, int max_size);
     
     void set_led(char num, unsigned char g, unsigned char r, unsigned char b);

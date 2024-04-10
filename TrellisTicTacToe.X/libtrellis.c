@@ -109,7 +109,7 @@ void send_block(unsigned char i2c_addr, unsigned char addr_upper,
     IFS3bits.MI2C2IF = 0;
 }
 
-void set_recorded_edges(char num, char edges)
+void set_keypad_events(char num, char edges)
 {
     
 }
