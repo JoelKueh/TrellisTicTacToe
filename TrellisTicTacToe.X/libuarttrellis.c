@@ -7,10 +7,11 @@
 
 #include "xc.h"
 
-#include "libbluetrellis.h"
+#include "libuarttrellis.h"
 #include "libuart.h"
 #include "libtrellis.h"
 #include "liblcd.h"
+#include "utills.h"
 
 #define BUTTON_EVENT_HEADER 'A'
 
@@ -69,7 +70,7 @@ void handle_set_led()
     struct set_led command;
     unpack_set_led(&command);
     
-    // Code to handle the contents of the command should go here.
+    set_led(0, 0x70, 0x70, 0x70);
 }
 
 void handle_set_leds()
@@ -119,7 +120,8 @@ void bluetrellis_init(void)
 
 void poll_buttons(void)
 {
-    
+    // DEBUG FUNCTIONS:
+    delay_ms(100);
 }
 
 void process_uart(void)

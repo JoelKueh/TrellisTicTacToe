@@ -1,0 +1,16 @@
+
+/build
+*.suo
+*.sln
+*.sdf
+*.opensdf
+*.vcxproj
+*.filters
+*.user
+*.db
+*.opendb
+# Ignore files created when used as an external module in an autotools project
+.deps/
+.dirstamp
+*.o
+

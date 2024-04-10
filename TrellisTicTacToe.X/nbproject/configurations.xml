@@ -6,10 +6,10 @@
                    projectFiles="true">
       <itemPath>libi2c.h</itemPath>
       <itemPath>libuart.h</itemPath>
-      <itemPath>libbluetrellis.h</itemPath>
       <itemPath>libtrellis.h</itemPath>
       <itemPath>liblcd.h</itemPath>
       <itemPath>utills.h</itemPath>
+      <itemPath>libuarttrellis.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -25,11 +25,11 @@
                    projectFiles="true">
       <itemPath>libi2c.c</itemPath>
       <itemPath>libuart.c</itemPath>
-      <itemPath>libbluetrellis.c</itemPath>
       <itemPath>bluetrellis_main.c</itemPath>
       <itemPath>liblcd.c</itemPath>
       <itemPath>utills.c</itemPath>
       <itemPath>libtrellis.c</itemPath>
+      <itemPath>libuarttrellis.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <projectmakefile>Makefile</projectmakefile>
@@ -758,6 +758,8 @@
         <property key="periphComp4.gte" value="gt"/>
         <property key="periphComp5.gte" value="gt"/>
         <property key="periphComp6.gte" value="gt"/>
+        <property key="programmerToGoFilePath"
+                  value="/home/joel/src/umntc/spring_2024/BluetoothTrellis/TrellisTicTacToe.X/debug/default/TrellisTicTacToe_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>
