@@ -7,6 +7,8 @@
 
 #include "xc.h"
 
+#include "libbluetrellis.h"
+
 // CW1: FLASH CONFIGURATION WORD 1 (see PIC24 Family Reference Manual 24.1)
 #pragma config ICS = PGx1          // Comm Channel Select (Emulator EMUC1/EMUD1 pins are shared with PGC1/PGD1)
 #pragma config FWDTEN = OFF        // Watchdog Timer Enable (Watchdog Timer is disabled)
@@ -36,8 +38,11 @@ void setup(void)
 int main(void) {
     setup();
     
+    bluetrellis_init();
+    
     while (1) {
-        
+        poll_buttons();
+        process_uart();
     }
     
     return 0;
