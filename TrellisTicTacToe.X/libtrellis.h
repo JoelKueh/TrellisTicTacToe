@@ -11,89 +11,35 @@
 
 // This is a guard condition so that contents of this file are not included
 // more than once.  
-#ifndef LIBUARTTRELLIS_H
-#define	LIBUARTTRELLIS_H
+#ifndef LIBTRELLIS_H
+#define	LIBTRELLIS_H
+
+#define MAX_READ_SIZE 32
+
+#define EDGE_NONE       0b00
+#define EDGE_RISING     0b01
+#define EDGE_FALLING    0b10
+#define EDGE_BOTH       0b11
 
 #include <xc.h>
 
-#include "libuart.h"
-
-#define BUTTON_EVENT_HEADER 'A'
-#define READ_RESPONSE_HEADER 'B'
-
-#define READ_REQUEST_HEADER 'C'
-#define SET_LED_HEADER 'D'
-#define SET_LEDS_HEADER 'E'
-#define SET_LCD_HEADER 'F'
+#include "libi2c.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif /* __cplusplus */
     
-    struct button_event {
-        unsigned char button_num;
-        unsigned int button_states;
-    };
+    void trellis_init(void);
     
-    struct read_response {
-        unsigned int button_states;
-    };
+    void set_recorded_edges(char num, char edges);
+    void get_button_events(unsigned char *buffer, int max_size);
     
-    struct set_led {
-        unsigned char led_num;
-        unsigned char color[3]; // RGB values for the led.
-    };
-    
-    struct set_leds {
-        unsigned char colors[16][3]; // Array of 16 RGB values.
-    };
-    
-    struct set_lcd {
-        unsigned char data[2][8]; // Array of strings for top and bottom row.
-    };
-    
-    inline void send_button_event(struct button_event *command)
-    {
-        send_command(
-                BUTTON_EVENT_HEADER,
-                (void *)command,
-                sizeof(struct button_event)
-        );
-    }
-    
-    inline void send_read_response(struct read_response *command)
-    {
-        send_command(
-                BUTTON_EVENT_HEADER,
-                (void *)command,
-                sizeof(struct read_response)
-        );
-    }
-    
-    inline void unpack_set_led(struct set_led *dest)
-    {
-        get_command_body((void *)dest, sizeof(struct set_led));
-    }
-    
-    inline void unpack_set_leds(struct set_leds *dest)
-    {
-        get_command_body((void *)dest, sizeof(struct set_leds));
-    }
-    
-    inline void unpack_set_lcd(struct set_lcd *dest)
-    {
-        get_command_body((void *)dest, sizeof(struct set_lcd));
-    }
-    
-    void handle_set_led();
-
-    void handle_set_leds();
-    
-    void handle_set_lcd();
+    void set_led(char num, unsigned char g, unsigned char r, unsigned char b);
+    void set_display(char num, unsigned char colors[16][3]);
+    void display_show(void);
     
 #ifdef	__cplusplus
 }
 #endif /* __cplusplus */
 
-#endif	/* LIBUARTTRELLIS_H */
-
+#endif	/* LIBTRELLIS_H */

@@ -26,12 +26,18 @@ extern "C" {
     void uart_init(void);
     
     /**
+     * Checks if the recieve buffer is empty.
+     * @return 1 if the buffer has contents.
+     */
+    int uart_empty(void);
+    
+    /**
      * Send 'bytes' bytes of data over UART, preceeded by a command header.
      * @param header The header byte of the command.
      * @param data The address of the data to be sent.
      * @param bytes The number of data bytes in the command.
      */
-    void send_command(unsigned char header, void *data, unsigned char bytes);
+    void send_command(unsigned char header, unsigned char *data, unsigned char bytes);
     
     /**
      * Consumes and returns the header byte of the top command.
@@ -44,7 +50,7 @@ extern "C" {
      * @param com The address of a command where the data should be inserted.
      * @param bytes The number of bytes to take from the buffer.
      */
-    void get_command_body(void *dest, unsigned char bytes);
+    void get_command_body(unsigned char *dest, unsigned char bytes);
 
 #ifdef	__cplusplus
 }

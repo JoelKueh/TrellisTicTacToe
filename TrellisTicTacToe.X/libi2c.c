@@ -24,6 +24,11 @@ struct command_queue {
 volatile struct command_queue i2c_queue;
 volatile int i2c_is_waiting = 1;
 
+int i2c_queue_full(void)
+{
+    return i2c_queue.cnt == ARRAY_SIZE;
+}
+
 /**
  * Returns the address of the top of the queue so that an item
  * can be pushed to it.
@@ -81,6 +86,17 @@ void i2c_queue_init(void)
 	{
 		i2c_queue.data[i].len = 0;
 	}
+}
+
+void i2c_init(void)
+{
+	I2C2CONbits.I2CEN = 0;
+	I2C2BRG = 157;
+	_MI2C2IF = 0;
+	_MI2C2IE = 1;
+	I2C2CONbits.I2CEN = 1;
+    
+    i2c_queue_init();
 }
 
 void __attribute__((__interrupt__, __auto_psv__)) _MI2C2Interrupt(void)

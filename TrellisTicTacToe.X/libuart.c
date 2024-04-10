@@ -26,25 +26,26 @@ struct uart_buffer {
 volatile struct uart_buffer tr_queue;
 volatile struct uart_buffer rc_buff;
 
-inline void buffer_push(struct uart_buffer &buff, char data)
+void buffer_push(volatile struct uart_buffer *buff, char data)
 {
-    buff.data[buff.w_idx++] = data;
-    buff.w_idx &= MAX_IDX;
-    buff.cnt++;
+    buff->data[buff->w_idx++] = data;
+    buff->w_idx &= MAX_IDX;
+    buff->cnt++;
 }
 
-inline char buffer_pop(struct uart_buffer &buff)
+char buffer_pop(volatile struct uart_buffer *buff)
 {
-    char data = buff.data[buff.r_idx++] = data;
-    buff.r_idx &= MAX_IDX;
-    buff.cnt--;
+    while (buff->w_idx == buff->r_idx);
+    char data = buff->data[buff->r_idx++];
+    buff->r_idx &= MAX_IDX;
+    buff->cnt--;
     return data;
 }
 
 void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     _U1RXIF = 0;
-    buffer_push(rc_buff, U1RXREG);
+    buffer_push(&rc_buff, U1RXREG);
 }
 
 volatile int transmit_waiting = 1;
@@ -53,21 +54,29 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1TXInterrupt(void)
     char data;
     _U1TXIF = 0;
     
-    if (uart_buffer.cnt == 0) {
+    if (tr_queue.cnt == 0) {
         transmit_waiting = 1;
         return;
     }
     
-    data = buffer_pop(tr_queue);
+    data = buffer_pop(&tr_queue);
     U1TXREG = data;
 }
 
 void uart_init(void) {
+    tr_queue.w_idx = 0;
+    tr_queue.r_idx = 0;
+    tr_queue.cnt = 0;
+    
+    rc_buff.w_idx = 0;
+    rc_buff.r_idx = 0;
+    rc_buff.cnt = 0;
+    
     // I think the following two lines are irrelevant. The UART doc
     // Page 3, when describing the UARTEN bit in UxMODE says that when UARTEN
     // is set, TRISx are ignored and instead UEN and UTXEN control pins.
-    _TRISB6 = 0; // U1TX output
-    _TRISB10 = 1; // U1RX input
+    _TRISB7 = 0; // U1TX output
+    _TRISB8 = 1; // U1RX input
 
     U1MODE = 0; // UEN<1:0> bits control the pins
     // U1BRG = 34; // 115200 baud,
@@ -80,8 +89,8 @@ void uart_init(void) {
 
     // Peripheral Pin Select 
     __builtin_write_OSCCONL(OSCCON & 0xbf); // unlock PPS
-    _RP6R = 0x0003; //RB6->UART1:U1TX; See Table 10-3 on P109 of the datasheet
-    _U1RXR = 10; //RB10->UART1:U1RX;
+    _RP7R = 0x0003; //RB6->UART1:U1TX; See Table 10-3 on P109 of the datasheet
+    _U1RXR = 8; //RB10->UART1:U1RX;
     __builtin_write_OSCCONL(OSCCON | 0x40); // lock   PPS
 
     // Enable receive interrupt flag.
@@ -99,12 +108,12 @@ void uart_init(void) {
  * @param data A pointer to the body of the command.
  * @param bytes The number of data bytes in the command.
  */
-void send_command(unsigned char header, void *data, unsigned char bytes)
+void send_command(unsigned char header, unsigned char *data, unsigned char bytes)
 {
     // Push the command to the transmit queue.
-    buffer_push(tr_queue, data);
+    buffer_push(&tr_queue, header);
     while (bytes--) {
-        buffer_push(tr_queue, *data++);
+        buffer_push(&tr_queue, *data++);
     }
     
     // If the transmit interrupt is sleeping, jump into it to send a byte.
@@ -119,7 +128,7 @@ void send_command(unsigned char header, void *data, unsigned char bytes)
  */
 unsigned char get_command_header()
 {
-    return buffer_pop(rc_buff);
+    return buffer_pop(&rc_buff);
 }
 
 /**
@@ -127,10 +136,15 @@ unsigned char get_command_header()
  * @param dest The where the data should be inserted.
  * @param bytes The number of bytes to take from the buffer.
  */
-void get_command_body(void *dest, unsigned char bytes)
+void get_command_body(unsigned char *dest, unsigned char bytes)
 {
     // Read the data section of the command in the receive buffer.
     while (bytes--) {
-        *dest++ = buffer_pop(rc_buff);
+        *dest++ = buffer_pop(&rc_buff);
     }
+}
+
+int uart_empty(void)
+{
+    return rc_buff.r_idx == rc_buff.w_idx;
 }

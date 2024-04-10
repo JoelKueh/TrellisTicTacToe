@@ -16,7 +16,7 @@
 
 #include <xc.h>
 
-#define MAX_COMMAND_LEN 33
+#define MAX_I2C_LEN 100
 
 #ifdef	__cplusplus
 extern "C" {
@@ -28,8 +28,19 @@ extern "C" {
 	 */
 	struct i2c_command {
 		int len;
-		char data[MAX_COMMAND_LEN];
+		char data[MAX_I2C_LEN];
 	};
+    
+    /**
+     * Begins i2c communication.
+     */
+    void i2c_init(void);
+    
+    /**
+     * Checks if the i2c queue is full.
+     * @return True if the queue is full.
+     */
+    int i2c_queue_full(void);
 
 	/**
 	 * Returns the address of the top of the queue so that an item
