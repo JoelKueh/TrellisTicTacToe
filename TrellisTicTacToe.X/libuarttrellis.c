@@ -14,7 +14,6 @@
 #include "utills.h"
 
 #define BUTTON_EVENT_HEADER 'A'
-
 #define SET_LED_HEADER 'D'
 #define SET_LEDS_HEADER 'E'
 #define SET_LCD_HEADER 'F'
@@ -70,7 +69,16 @@ void handle_set_led()
     struct set_led command;
     unpack_set_led(&command);
     
-    set_led(0, 0x70, 0x70, 0x70);
+    set_led(command.led_num, command.color[0],
+        command.color[1], command.color[2]);
+    
+    // DEBUG, THIS DEFINETLY SHOULD NOT BE IN HERE.
+    display_show();
+    
+    send_button_event((struct button_event *)&command.led_num);
+    send_button_event((struct button_event *)&command.color[0]);
+    send_button_event((struct button_event *)&command.color[1]);
+    send_button_event((struct button_event *)&command.color[2]);
 }
 
 void handle_set_leds()
@@ -114,14 +122,13 @@ void bluetrellis_init(void)
     uart_init();
     
     // DEBUG FUNCTIONS:
-    set_led(0, 0x70, 0x70, 0x70);
+    set_led(0, 0x00, 0x70, 0x00);
     display_show();
 }
 
 void poll_buttons(void)
 {
-    // DEBUG FUNCTIONS:
-    delay_ms(100);
+    
 }
 
 void process_uart(void)

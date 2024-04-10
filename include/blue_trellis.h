@@ -1,8 +1,6 @@
 
 #include <string>
-#include <iostream>
 
-#include "bsp/DeviceINQ.h"
 #include "bsp/BTSerialPortBinding.h"
 
 class blue_trellis {
@@ -37,6 +35,8 @@ public:
 	void send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b);
 	void send_set_leds(uint8_t colors[16][3]);
 	void send_set_lcd(uint8_t data[2][8]);
+
+	void print_data();
 
 	~blue_trellis();
 
