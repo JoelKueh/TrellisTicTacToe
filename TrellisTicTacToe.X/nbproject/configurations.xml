@@ -4,6 +4,9 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <itemPath>libi2c.h</itemPath>
+      <itemPath>libuart.h</itemPath>
+      <itemPath>libtrellis.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -13,6 +16,9 @@
                    displayName="Source Files"
                    projectFiles="true">
       <itemPath>t4_main.c</itemPath>
+      <itemPath>libi2c.c</itemPath>
+      <itemPath>libuart.c</itemPath>
+      <itemPath>libtrellis.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
