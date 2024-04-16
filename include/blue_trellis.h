@@ -3,9 +3,6 @@
 
 #include "bsp/BTSerialPortBinding.h"
 
-// TODO: REMOVE
-#define BLUE_STDIO
-
 #ifdef BLUE_STDIO
 #include <thread>
 #endif
