@@ -5,8 +5,11 @@ cmake_minimum_required(VERSION 3.10)
 project(JChess VERSION 2.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Check for bluez development modules
-# FindPkgConfig(BLUEZ REQUIRED bluez-5.72)
+option(STDOUT "Set ON if bluetooth commands should be routed to stdout" OFF)
+
+if (STDOUT)
+	add_compile_definitions(BLUE_STDIO)
+endif (STDOUT)
 
 # Set Debug
 set(CMAKE_BUILD_TYPE Debug)
