@@ -40,12 +40,15 @@ void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 	colors[num][2] = b;
 	print_trellis();
 #else
+	std::cout << "Connecting..." << std::endl;
 	char buffer[] = { SET_LED_HEADER, (char)num, (char)g, (char)r, (char)b };
 	port->Write(buffer, 5);
+	std::cout << "Connected" << std::endl;
+	std::cout << "Sending Command...\nResponse: " << std::flush;
 #endif
 }
 
-void blue_trellis::send_set_display(uint8_t colors[16][3])
+void blue_trellis::send_set_display(const uint8_t colors[16][3])
 {
 #ifdef BLUE_STDIO
 	for (int i = 0; i < 16; ++i) {
@@ -61,7 +64,7 @@ void blue_trellis::send_set_display(uint8_t colors[16][3])
 #endif
 }
 
-void blue_trellis::send_set_lcd(uint8_t data[2][8])
+void blue_trellis::send_set_lcd(const uint8_t data[2][8])
 {
 #ifdef BLUE_STDIO
 	std::cout << "LCD State" << std::endl
@@ -207,6 +210,7 @@ void blue_trellis::print_data()
 #endif
 }
 
+#ifdef BLUE_STDIO
 void blue_trellis::print_trellis()
 {
 	static std::string reset = "\033[m";
@@ -235,6 +239,7 @@ void blue_trellis::print_trellis()
 		  << "================="
 		  << std::endl << std::endl;
 }
+#endif
 
 blue_trellis::~blue_trellis()
 {

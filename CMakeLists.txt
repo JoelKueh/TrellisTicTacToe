@@ -5,11 +5,8 @@ cmake_minimum_required(VERSION 3.10)
 project(JChess VERSION 2.0)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-option(STDOUT "Set ON if bluetooth commands should be routed to stdout" OFF)
+option(STDIO "Set ON if bluetooth commands should be routed to stdout" OFF)
 
-if (STDOUT)
-	add_compile_definitions(BLUE_STDIO)
-endif (STDOUT)
 
 # Set Debug
 set(CMAKE_BUILD_TYPE Debug)
@@ -26,10 +23,22 @@ add_subdirectory(src/bluetooth-serial-port)
 # Build bluetooth trellis library
 add_library(blue_trellis src/blue_trellis/blue_trellis.cpp)
 target_link_libraries(blue_trellis bluetoothserialport)
+if (STDIO)
+	target_compile_definitions(blue_trellis PRIVATE BLUE_STDIO)
+endif (STDIO)
 
 # Build game executable
-add_executable(trellis_game src/trellis_game/trellis_game.cpp)
+add_executable(trellis_game src/trellis_game/trellis_main.cpp
+	src/trellis_game/scene.cpp
+	src/trellis_game/dummy_animation.cpp
+	src/trellis_game/tictactoe.cpp
+	src/trellis_game/mole_whacker.cpp
+	src/trellis_game/calculator.cpp)
 target_link_libraries(trellis_game blue_trellis)
+
+# Build test executable
+add_executable(trellis_test src/trellis_game/trellis_test.cpp)
+target_link_libraries(trellis_test blue_trellis)
 
 # Force CMake to output compile commands
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)

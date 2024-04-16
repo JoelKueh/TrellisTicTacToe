@@ -1,8 +1,6 @@
 
 #include <iostream>
 #include <string>
-#include <thread>
-#include <chrono>
 
 #include "blue_trellis.h"
 
@@ -10,14 +8,7 @@ const std::string bluetooth_addr = "00:14:03:05:5E:92";
 
 int main()
 {
-#ifndef BLUE_STDIO
-	std::cout << "Connecting..." << std::endl;
-#endif
 	blue_trellis bt = blue_trellis(bluetooth_addr);
-#ifndef BLUE_STDIO
-	std::cout << "Connected" << std::endl;
-	std::cout << "Sending Command...\nResponse: " << std::flush;
-#endif
 
 	uint8_t colors[16][3] = {
 		{ 0xF0, 0x00, 0x00 },
