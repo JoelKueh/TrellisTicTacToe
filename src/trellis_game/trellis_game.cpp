@@ -51,8 +51,8 @@ int main()
 		union blue_trellis::button_event event;
 		if (header == blue_trellis::BUTTON_EVENT_HEADER) {
 			event = bt.get_button_event();
-			std::cout << "Button " << (int)event.button_num
-				<< " was "
+			std::cout << std::dec << "Button "
+				<< (int)event.button_num << " was "
 				<< (event.is_rising ? "pressed" : "released")
 				<< std::endl;
 		}
