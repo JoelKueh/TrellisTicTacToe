@@ -26,9 +26,12 @@ blue_trellis::blue_trellis(std::string addr)
 #ifdef BLUE_STDIO
 	poller = new std::thread(loop_poll_stdin);
 #else
+	std::cout << "Connecting..." << std::endl;
 	this->addr = addr;
 	port = BTSerialPortBinding::Create(addr, 1);
 	port->Connect();
+	std::cout << "Connected" << std::endl;
+	std::cout << "Sending Command...\nResponse: " << std::flush;
 #endif
 }
 
@@ -40,11 +43,8 @@ void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 	colors[num][2] = b;
 	print_trellis();
 #else
-	std::cout << "Connecting..." << std::endl;
 	char buffer[] = { SET_LED_HEADER, (char)num, (char)g, (char)r, (char)b };
 	port->Write(buffer, 5);
-	std::cout << "Connected" << std::endl;
-	std::cout << "Sending Command...\nResponse: " << std::flush;
 #endif
 }
 

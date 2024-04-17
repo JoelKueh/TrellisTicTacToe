@@ -28,7 +28,7 @@ extern "C" {
 	 */
 	struct i2c_command {
 		int len;
-		char data[MAX_I2C_LEN];
+		unsigned char data[MAX_I2C_LEN];
 	};
     
     /**

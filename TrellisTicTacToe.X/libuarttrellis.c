@@ -75,10 +75,10 @@ void handle_set_led()
     // DEBUG, THIS DEFINETLY SHOULD NOT BE IN HERE.
     display_show();
     
-    send_button_event((struct button_event *)&command.led_num);
-    send_button_event((struct button_event *)&command.color[0]);
-    send_button_event((struct button_event *)&command.color[1]);
-    send_button_event((struct button_event *)&command.color[2]);
+//    send_button_event((struct button_event *)&command.led_num);
+//    send_button_event((struct button_event *)&command.color[0]);
+//    send_button_event((struct button_event *)&command.color[1]);
+//    send_button_event((struct button_event *)&command.color[2]);
 }
 
 void handle_set_leds()
@@ -121,14 +121,19 @@ void bluetrellis_init(void)
     trellis_init();
     uart_init();
     
-    // DEBUG FUNCTIONS:
-    set_led(0, 0x00, 0x70, 0x00);
+    // DEBUG FUNCTIONS
+    set_led(0, 0x80, 0x40, 0x40);
+    delay_ms(500);
+    display_show();
+    set_led(0, 0x20, 0x80, 0x40);
+    delay_ms(500);
     display_show();
 }
 
 void poll_buttons(void)
 {
-    
+//    delay_ms(5000);
+//    display_show();
 }
 
 void process_uart(void)
