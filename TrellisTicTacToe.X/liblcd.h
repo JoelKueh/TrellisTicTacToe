@@ -45,20 +45,13 @@ extern "C" {
 	 * Writes a putc command to the buffer to be sent over I2C
      * @param c The character to put to the buffer.
 	 */
-	void lcd_putc(char c);
+	void lcd_putc(unsigned char c);
     
     /**
      * Draws a string of 8 characters to the LCD.
      * @param string The string to be drawn.
      */
-    void lcd_puts(char string[]);
-    
-    /**
-     * Translates an ascii character to the lcd equivalent byte.
-     * @param c The character in ascii.
-     * @return The byte representing it in the lcd.
-     */
-    char letter_ascii_to_lcd(char c);
+    void lcd_puts(unsigned char string[]);
     
     /**
      * Draws a buffer of bytes to the lcd display.

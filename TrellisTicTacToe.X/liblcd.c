@@ -47,7 +47,7 @@ void lcd_set_cursor(char row, char col)
 /**
  * Pushes a print_character command to the buffer.
  */
-void lcd_putc(char c)
+void lcd_putc(unsigned char c)
 {
 	volatile struct i2c_command *cmd = i2c_queue_get_top();
 
@@ -63,7 +63,7 @@ void lcd_putc(char c)
 	i2c_queue_push();
 }
 
-void lcd_puts(char string[])
+void lcd_puts(unsigned char string[])
 {
     volatile struct i2c_command *cmd = i2c_queue_get_top();
     int i;

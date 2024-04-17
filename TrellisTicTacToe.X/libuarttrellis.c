@@ -14,8 +14,9 @@
 #include "utills.h"
 
 #define BUTTON_EVENT_HEADER 'A'
+#define SHOW_HEADER 'C'
 #define SET_LED_HEADER 'D'
-#define SET_LEDS_HEADER 'E'
+#define SET_DISPLAY_HEADER 'E'
 #define SET_LCD_HEADER 'F'
     
 struct button_event {
@@ -64,6 +65,11 @@ void unpack_set_lcd(struct set_lcd *dest)
     get_command_body((unsigned char *)dest, sizeof(struct set_lcd));
 }
 
+void handle_show()
+{
+    display_show();
+}
+
 void handle_set_led()
 {
     struct set_led command;
@@ -71,22 +77,14 @@ void handle_set_led()
     
     set_led(command.led_num, command.color[0],
         command.color[1], command.color[2]);
-    
-    // DEBUG, THIS DEFINETLY SHOULD NOT BE IN HERE.
-    display_show();
-    
-//    send_button_event((struct button_event *)&command.led_num);
-//    send_button_event((struct button_event *)&command.color[0]);
-//    send_button_event((struct button_event *)&command.color[1]);
-//    send_button_event((struct button_event *)&command.color[2]);
 }
 
-void handle_set_leds()
+void handle_set_display()
 {
     struct set_leds command;
     unpack_set_leds(&command);
     
-    // Code to handle the contents of the command should go here.
+    set_display(command.colors);
 }
 
 void handle_set_lcd()
@@ -94,7 +92,10 @@ void handle_set_lcd()
     struct set_lcd command;
     unpack_set_lcd(&command);
     
-    // Code to handle the contents of the command should go here.
+    lcd_set_cursor(0, 0);
+    lcd_puts(command.data[0]);
+    lcd_set_cursor(1, 0);
+    lcd_puts(command.data[1]);
 }
 
 void parse_uart_header(char header)
@@ -103,11 +104,14 @@ void parse_uart_header(char header)
         case SET_LED_HEADER:
             handle_set_led();
             break;
-        case SET_LEDS_HEADER:
-            handle_set_leds();
+        case SET_DISPLAY_HEADER:
+            handle_set_display();
             break;
         case SET_LCD_HEADER:
             handle_set_lcd();
+            break;
+        case SHOW_HEADER:
+            handle_show();
             break;
         default:
             break;
@@ -120,20 +124,39 @@ void bluetrellis_init(void)
     lcd_init();
     trellis_init();
     uart_init();
-    
+
     // DEBUG FUNCTIONS
-    set_led(0, 0x80, 0x40, 0x40);
-    delay_ms(500);
-    display_show();
-    set_led(0, 0x20, 0x80, 0x40);
+    unsigned char colors[16][3] = {
+        { 0x00, 0x70, 0x00},
+        { 0x10, 0x60, 0x00},
+        { 0x20, 0x50, 0x00},
+        { 0x30, 0x40, 0x00},
+        { 0x40, 0x30, 0x00},
+        { 0x50, 0x20, 0x00},
+        { 0x60, 0x10, 0x00},
+        { 0x70, 0x00, 0x00},
+        { 0x70, 0x00, 0x00},
+        { 0x60, 0x10, 0x00},
+        { 0x50, 0x20, 0x00},
+        { 0x40, 0x30, 0x00},
+        { 0x30, 0x40, 0x00},
+        { 0x20, 0x50, 0x00},
+        { 0x10, 0x60, 0x00},
+        { 0x00, 0x70, 0x00}
+    };
+    
+    set_display(colors);
+//    set_led(0, 0x00, 0x80, 0x00);
+//    set_led(1, 0x20, 0x80, 0x40);
+//    set_led(2, 0x80, 0x40, 0x40);
+//    set_led(3, 0x00, 0x80, 0x40);
     delay_ms(500);
     display_show();
 }
 
 void poll_buttons(void)
 {
-//    delay_ms(5000);
-//    display_show();
+    
 }
 
 void process_uart(void)

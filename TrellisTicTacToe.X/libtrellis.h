@@ -35,7 +35,7 @@ extern "C" {
     void get_button_events(unsigned char *buffer, int max_size);
     
     void set_led(char num, unsigned char g, unsigned char r, unsigned char b);
-    void set_display(char num, unsigned char colors[16][3]);
+    void set_display(unsigned char colors[16][3]);
     void display_show(void);
     
 #ifdef	__cplusplus

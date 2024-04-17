@@ -51,12 +51,13 @@ void reset_scene(blue_trellis &bt)
 	};
 
 	const uint8_t blank_lcd[2][8] = {
-		{ 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 },
-		{ 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+		{ 'a', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'c' },
+		{ 'b', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'd' }
 	};
 
-	bt.send_set_display(select_frame);
-	bt.send_set_lcd(blank_lcd);
+//	bt.send_set_display(select_frame);
+//	bt.send_set_lcd(blank_lcd);
+//	bt.send_show();
 }
 
 scene *select_scene(blue_trellis &bt)
@@ -77,6 +78,9 @@ int main()
 	blue_trellis bt = blue_trellis(bluetooth_addr);
 	scene *active_scene = nullptr;
 	reset_scene(bt);
+
+	// DEBUG
+	active_scene = new dummy_animation(&bt);
 
 	while (true) {
 		// If we don't have a scene, try to select one.

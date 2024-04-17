@@ -35,13 +35,22 @@ blue_trellis::blue_trellis(std::string addr)
 #endif
 }
 
+void blue_trellis::send_show()
+{
+#ifdef BLUE_STDIO
+	print_trellis();
+#else
+	static char header = SHOW_HEADER;
+	port->Write(&header, 1);
+#endif
+}
+
 void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 {
 #ifdef BLUE_STDIO
 	colors[num][0] = g;
 	colors[num][1] = r;
 	colors[num][2] = b;
-	print_trellis();
 #else
 	char buffer[] = { SET_LED_HEADER, (char)num, (char)g, (char)r, (char)b };
 	port->Write(buffer, 5);
@@ -56,7 +65,6 @@ void blue_trellis::send_set_display(const uint8_t colors[16][3])
 		this->colors[i][1] = colors[i][1];
 		this->colors[i][2] = colors[i][2];
 	}
-	print_trellis();
 #else
 	static char header = SET_DISPLAY_HEADER;
 	port->Write(&header, 1);
@@ -80,8 +88,9 @@ void blue_trellis::send_set_lcd(const uint8_t data[2][8])
 	std::cout << "==============================================="
 		<< std::endl << std::endl;
 #else
-	static char header = SET_DISPLAY_HEADER;
+	static char header = SET_LCD_HEADER;
 	port->Write(&header, 1);
+	port->Write((const char *)data, 16);
 #endif
 }
 

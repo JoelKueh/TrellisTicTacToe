@@ -12,7 +12,13 @@ dummy_animation::dummy_animation(blue_trellis *bt)
 	last_time = new high_resolution_clock::time_point(
 			high_resolution_clock::now()
 	);
-	bt->send_set_display(frames[0]);
+	const uint8_t blank_lcd[2][8] = {
+		{ 'a', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'c' },
+		{ 'b', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'd' }
+	};
+//	bt->send_set_display(frames[0]);
+//	bt->send_set_lcd(blank_lcd);
+//	bt->send_show();
 	last_frame = 0;
 }
 
@@ -25,9 +31,15 @@ void dummy_animation::update()
 	auto duration = duration_cast<milliseconds>(now - *last_time);
 
 	// If 500 milliseconds have passed, update the time.
-	if (duration.count() > 500) {
+	if (duration.count() > 1000) {
 		last_frame = !last_frame;
 		bt->send_set_display(frames[last_frame]);
+
+		const uint8_t blank_lcd[2][8] = {
+			{ 'a', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'c' },
+			{ 'b', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'd' }
+		};
+		bt->send_show();
 
 		// Update our last frame time
 		delete last_time;
