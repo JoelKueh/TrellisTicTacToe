@@ -18,7 +18,6 @@ dummy_animation::dummy_animation(blue_trellis *bt)
 	last_frame = 0;
 
 	bt->send_set_display(frames[0]);
-	bt->send_show();
 }
 
 
@@ -33,7 +32,6 @@ void dummy_animation::update()
 	if (duration.count() > 500) {
 		last_frame = !last_frame;
 		bt->send_set_display(frames[last_frame]);
-		bt->send_show();
 
 		// Update our last frame time
 		delete last_time;

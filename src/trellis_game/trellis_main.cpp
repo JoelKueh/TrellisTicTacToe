@@ -51,13 +51,12 @@ void reset_scene(blue_trellis &bt)
 	};
 
 	const uint8_t blank_lcd[2][8] = {
-		{ 'a', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'c' },
-		{ 'b', 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 'd' }
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
 
-//	bt.send_set_display(select_frame);
-//	bt.send_set_lcd(blank_lcd);
-//	bt.send_show();
+	bt.send_set_display(select_frame);
+	bt.send_set_lcd(blank_lcd);
 }
 
 scene *select_scene(blue_trellis &bt)

@@ -51,7 +51,6 @@ public:
 
 	blue_trellis(std::string addr);
 
-	void send_show();
 	void send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b);
 	void send_set_display(const uint8_t colors[16][3]);
 	void send_set_lcd(const uint8_t data[2][8]);

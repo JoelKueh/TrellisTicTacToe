@@ -55,7 +55,6 @@ int main()
 
 	bt.send_set_display(select_frame);
 	bt.send_set_led(0, 0x80, 0x00, 0x80);
-	bt.send_show();
 //	bt.send_set_led(0, 0x80, 0x80, 0x80);
 //	bt.send_set_lcd(lcd);
 
