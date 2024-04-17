@@ -1,5 +1,6 @@
 # Set min required version
 cmake_minimum_required(VERSION 3.10)
+set(CMAKE_CXX_STANDARD 17)
 
 # Set project name
 project(JChess VERSION 2.0)
