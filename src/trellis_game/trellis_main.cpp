@@ -79,9 +79,6 @@ int main()
 	scene *active_scene = nullptr;
 	reset_scene(bt);
 
-	// DEBUG
-	active_scene = new dummy_animation(&bt);
-
 	while (true) {
 		// If we don't have a scene, try to select one.
 		if (!active_scene) {

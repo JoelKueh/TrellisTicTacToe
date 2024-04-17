@@ -20,28 +20,28 @@
 #define SET_LCD_HEADER 'F'
     
 struct button_event {
-    unsigned char button_num : 7;
-    unsigned char is_rising : 1;
+    uint8_t button_num : 7;
+    uint8_t is_rising : 1;
 };
 struct button_event b_event;
 
 struct set_led {
-    unsigned char led_num;
-    unsigned char color[3]; // RGB values for the led.
+    uint8_t led_num;
+    uint8_t color[3]; // RGB values for the led.
 };
 struct set_led set_led_com;
 
 struct set_leds {
-    unsigned char colors[16][3]; // Array of 16 RGB values.
+    uint8_t colors[16][3]; // Array of 16 RGB values.
 };
 struct set_leds set_leds_com;
 
 struct set_lcd {
-    unsigned char data[2][8]; // Array of strings for top and bottom row.
+    uint8_t data[2][8]; // Array of strings for top and bottom row.
 };
 struct set_lcd set_lcd_com;
     
-void send_button_event(struct button_event *command)
+void send_button_event(const struct button_event *command)
 {
     send_command(
             BUTTON_EVENT_HEADER,
@@ -67,7 +67,7 @@ void unpack_set_lcd(struct set_lcd *dest)
 
 void handle_show()
 {
-    display_show();
+//    display_show();
 }
 
 void handle_set_led()
@@ -146,17 +146,24 @@ void bluetrellis_init(void)
     };
     
     set_display(colors);
-//    set_led(0, 0x00, 0x80, 0x00);
-//    set_led(1, 0x20, 0x80, 0x40);
-//    set_led(2, 0x80, 0x40, 0x40);
-//    set_led(3, 0x00, 0x80, 0x40);
-    delay_ms(500);
-    display_show();
 }
 
 void poll_buttons(void)
 {
+    union key_event events[30];
+    union key_event *key = events;
+    struct button_event button;
+    int num_events;
     
+    await_frame();
+    display_show();
+    num_events = get_button_events(events, 30);
+    delay_ms(30);
+    while (num_events--) {
+        button.is_rising = key->edge == EDGE_RISING;
+        button.button_num = key->num;
+        send_button_event(&button);
+    }
 }
 
 void process_uart(void)
