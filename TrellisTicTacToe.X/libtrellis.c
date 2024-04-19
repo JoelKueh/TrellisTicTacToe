@@ -115,7 +115,7 @@
 //}
 
 void read_block(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
-        uint8_t *dest, uint8_t size)
+        uint8_t *dest, uint8_t size, int delay)
 {
     // Start Condition
     IFS3bits.MI2C2IF = 0;
@@ -135,34 +135,39 @@ void read_block(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
         IFS3bits.MI2C2IF = 0;
     }
     
-    I2C2CONbits.RSEN = 1;
-    while (I2C2CONbits.RCEN);
-    IFS3bits.MI2C2IF = 0;
-
-//    // Stop Condition
-//    I2C2CONbits.PEN = 1;
-//    while (I2C2CONbits.PEN);
+    // I don't think that the slave wants a repeated start condition.
+//    I2C2CONbits.RSEN = 1;
+//    while (I2C2CONbits.RSEN);
 //    IFS3bits.MI2C2IF = 0;
-//
-//    // Start Condition
-//    I2C2CONbits.SEN = 1;
-//    while (I2C2CONbits.SEN);
-//    IFS3bits.MI2C2IF = 0;
+    
+    I2C2CONbits.PEN = 1;
+    while (I2C2CONbits.PEN);
 
-    delay_us(100);
+    // Delay for slave to prepare its data (this won't work on a multi-master system)
+    delay_us(delay);
+    
+    I2C2CONbits.SEN = 1;
+    while (I2C2CONbits.SEN);
 
     // Restart to initiate read
     I2C2TRN = i2c_addr | 0b1;
     while (!IFS3bits.MI2C2IF);
-    IFS3bits.MI2C2IF = 0;
 
-    // Reading Data
-    while (size--) {
+    // Reading data untill there is only 1 byte left
+    while (size-- != 1) {
         I2C2CONbits.RCEN = 1;
         while (I2C2CONbits.RCEN);
         *dest++ = I2C2RCV;
-        I2C2CONbits.ACKEN = 1;
+        I2C2CONbits.ACKEN = 1; // Request new byte
+        while (I2C2CONbits.ACKEN); // Wait for ACKEN SEND
     }
+    
+    // Receive last byte
+    I2C2CONbits.RCEN = 1;
+    while (I2C2CONbits.RCEN);
+    *dest++ = I2C2RCV;
+    I2C2CONbits.ACKDT = 1; 
+    while (I2C2CONbits.ACKDT);
 
     // Stop condition
     I2C2CONbits.PEN = 1;
@@ -228,17 +233,17 @@ void set_keypad_event(uint8_t num, uint8_t edge, uint8_t active)
 int get_button_events(union key_event *buffer, uint8_t max_size)
 {
     const uint8_t prefixes[2][2] = {
-        { SEESAW_KEYPAD_BASE, SEESAW_KEYPAD_COUNT },
+        { SEESAW_STATUS_BASE, SEESAW_STATUS_HW_ID },
         { SEESAW_KEYPAD_BASE, SEESAW_KEYPAD_FIFO }
     };
     uint8_t len;
-    read_block(TRELLIS_ADDR, prefixes[0], 2, &len, 1);
+    read_block(TRELLIS_ADDR, prefixes[0], 2, &len, 1, 500);
     asm("nop");
     asm("nop");
     delay_us(500);
     len = len > max_size ? max_size : len;
     if (len != 0) {
-        read_block(TRELLIS_ADDR, prefixes[1], 2, buffer, len);
+        read_block(TRELLIS_ADDR, prefixes[1], 2, (uint8_t *)buffer, len, 500);
     }
     
     return len;
