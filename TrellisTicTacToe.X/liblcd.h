@@ -26,7 +26,7 @@ extern "C" {
 	 * Writes an lcd command to a circular buffer to be sent over I2C.
      * @param pkg The payload for the command.
 	 */
-	void lcd_cmd_async(char pkg);
+	void lcd_cmd(uint8_t pkg);
 
 	/**
 	 * Initializes the lcd. Should only be run once at the beginning of the
@@ -39,25 +39,25 @@ extern "C" {
      * @param row The new row of the cursor.
      * @param col The new column of the cursor.
 	 */
-	void lcd_set_cursor(char row, char col);
+	void lcd_set_cursor(uint8_t row, uint8_t col);
 
 	/**
 	 * Writes a putc command to the buffer to be sent over I2C
      * @param c The character to put to the buffer.
 	 */
-	void lcd_putc(unsigned char c);
+	void lcd_putc(uint8_t c);
     
     /**
      * Draws a string of 8 characters to the LCD.
      * @param string The string to be drawn.
      */
-    void lcd_puts(unsigned char string[]);
+    void lcd_puts(uint8_t string[]);
     
     /**
      * Draws a buffer of bytes to the lcd display.
      * @param string The new set of characters to be drawn.
      */
-    void lcd_set_display(char buffer[2][8]);
+    void lcd_set_display(uint8_t buffer[2][8]);
     
 #ifdef	__cplusplus
 }

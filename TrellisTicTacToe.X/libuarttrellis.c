@@ -14,7 +14,6 @@
 #include "utills.h"
 
 #define BUTTON_EVENT_HEADER 'A'
-#define SHOW_HEADER 'C'
 #define SET_LED_HEADER 'D'
 #define SET_DISPLAY_HEADER 'E'
 #define SET_LCD_HEADER 'F'
@@ -23,23 +22,19 @@ struct button_event {
     uint8_t button_num : 7;
     uint8_t is_rising : 1;
 };
-struct button_event b_event;
 
 struct set_led {
     uint8_t led_num;
     uint8_t color[3]; // RGB values for the led.
 };
-struct set_led set_led_com;
 
 struct set_leds {
     uint8_t colors[16][3]; // Array of 16 RGB values.
 };
-struct set_leds set_leds_com;
 
 struct set_lcd {
     uint8_t data[2][8]; // Array of strings for top and bottom row.
 };
-struct set_lcd set_lcd_com;
     
 void send_button_event(const struct button_event *command)
 {
@@ -63,11 +58,6 @@ void unpack_set_leds(struct set_leds *dest)
 void unpack_set_lcd(struct set_lcd *dest)
 {
     get_command_body((unsigned char *)dest, sizeof(struct set_lcd));
-}
-
-void handle_show()
-{
-//    display_show();
 }
 
 void handle_set_led()
@@ -109,9 +99,6 @@ void parse_uart_header(char header)
             break;
         case SET_LCD_HEADER:
             handle_set_lcd();
-            break;
-        case SHOW_HEADER:
-            handle_show();
             break;
         default:
             break;
