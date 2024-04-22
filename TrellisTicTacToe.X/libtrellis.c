@@ -121,8 +121,6 @@ void trellis_init(void)
     _T3IF = 1;
     T3CONbits.TON = 1;
     
-    _MI2C2IE = 0;
-    
     // Software Reset Command
     prefix[0] = SEESAW_STATUS_BASE;
     prefix[1] = SEESAW_STATUS_SWRST;
@@ -158,5 +156,4 @@ void trellis_init(void)
     }
     
     _MI2C2IF = 0;
-//    _MI2C2IE = 1;
 }
