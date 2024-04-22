@@ -47,14 +47,14 @@ is not specific to that application however, and can be used on its own.
 
 The functions provided by this library are as follows:
 
-```
+```c
 /**
  * Initializes UART communication on pins RB7 and RB8 at 38400 baud.
  */
 void uart_init(void);
 ```
 
-```
+```c
 /**
  * Checks if the receive buffer is empty.
  * @return 1 if the buffer has contents.
@@ -62,7 +62,7 @@ void uart_init(void);
 int uart_empty(void);
 ```
 
-```
+```c
 /**
  * Send 'bytes' bytes of data over UART, preceeded by a command header.
  * @param header The header byte of the command.
@@ -72,7 +72,7 @@ int uart_empty(void);
 void send_command(unsigned char header, unsigned char *data, unsigned char bytes);
 ```
 
-```
+```c
 /**
  * Consumes and returns the header byte of the top command in the queue.
  * Blocks if there is no data in the UART buffer.
@@ -81,7 +81,7 @@ void send_command(unsigned char header, unsigned char *data, unsigned char bytes
 unsigned char get_command_header();
 ```
 
-```
+```c
 /**
  * Unpacks 'bytes' bytes of data into a command data array.
  * Blocks until enough bytes are read from the UART buffer.
@@ -102,7 +102,7 @@ consisting of a header character and a body then send it as a series of bytes
 with the function send_command(). This is best shown in the poll_and_update()
 function in [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
 
-```
+```c
 void poll_and_update(void)
 {
     union key_event events[30];
@@ -125,7 +125,7 @@ void poll_and_update(void)
 This function collects a set of button_events from the trellis then sends them
 one over the buffer using the send_button_event() function defined above.
 
-```
+```c
 void send_button_event(const struct button_event *command)
 {
     send_command(
@@ -139,7 +139,7 @@ void send_button_event(const struct button_event *command)
 Handling command input is not much different. A good example of this is the
 process_uart() function from [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
 
-```
+```c
 void process_uart(void)
 {
     while (!uart_empty()) {
@@ -153,7 +153,7 @@ This function empties the UART buffer. It first get a header byte from the
 buffer and processes that byte as a command header in the parse_uart_header()
 function.
 
-```
+```c
 void parse_uart_header(char header)
 {
     switch (header) {
@@ -176,7 +176,7 @@ Depending on what byte it recieves, it makes a call to handle the given event.
 For example, if the event is a set_led command, then it makes a call to
 handle_set_led()
 
-```
+```c
 void handle_set_led()
 {
     struct set_led command;
@@ -200,7 +200,7 @@ function as a bluetooth, rgb gamepad.
 
 The functions are defined as follows.
 
-```
+```c
 /**
  * Initializes i2c communication with the I2C2 peripheral as well as 38400
  * baud UART communication with peripheral U1 with TX on RB7 and RX on RB8.
@@ -210,7 +210,7 @@ The functions are defined as follows.
 void bluetrellis_init(void);
 ```
 
-```
+```c
 /**
  * Polls for button presses and sends a draw/show command to the display.
  * This function runs at a period of 20ms or greater. If 20ms has not
@@ -220,7 +220,7 @@ void bluetrellis_init(void);
 void poll_and_update(void);
 ```
 
-```
+```c
 /**
  * Handles commands sent over UART from the bluetooth device.
  */
@@ -232,7 +232,7 @@ void process_uart(void);
 There is really only one proper way to use this library. It is shown in
 [bluetrellis_main.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/bluetrellis_main.c)
 
-```
+```c
 int main(void) {
     setup();
     
@@ -289,7 +289,7 @@ To learn more about building look at README.md in the build directory.
 The library defines the following commands (these correspond with the
 libuarttrellis library on the PIC side)
 
-```
+```cpp
 enum {
     BUTTON_EVENT_HEADER = 'A',
     SHOW_HEADER = 'C',
@@ -299,7 +299,7 @@ enum {
 };
 ```
 
-```
+```cpp
 /**
  * A struct that defines the layout of a button_event
  */
@@ -312,7 +312,7 @@ union button_event {
 };
 ```
 
-```
+```cpp
 /**
  * A struct that defines the layout of a set_led command
  */
@@ -325,7 +325,7 @@ union set_led {
 };
 ```
 
-```
+```cpp
 /**
  * A struct that defines the layout of a set_display command
  */
@@ -337,7 +337,7 @@ union set_display {
 };
 ```
 
-```
+```cpp
 /**
  * A struct that defines the layout of a set_lcd comamnd
  */
@@ -353,7 +353,7 @@ union set_lcd {
 
 The following functions are provided to simplify sending and recieving commands
 
-```
+```cpp
 /**
  * Constructs a blue_trellis object
  * @param addr a string containing the address of the bluetooth device
@@ -361,7 +361,7 @@ The following functions are provided to simplify sending and recieving commands
 blue_trellis(std::string addr);
 ```
 
-```
+```cpp
 /**
  * Sends a set_led command over bluetooth.
  * @param num The number of the led to set on the button pad
@@ -372,7 +372,7 @@ blue_trellis(std::string addr);
 void send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b);
 ```
 
-```
+```cpp
 /**
  * Sends a set_display command over bluetooth
  * @param colors An array of 16 GRB encoded colors to be displayed
@@ -380,7 +380,7 @@ void send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b);
 void send_set_display(const uint8_t colors[16][3]);
 ```
 
-```
+```cpp
 /**
  * Sends a set_lcd command over bluetooth
  * @param data The array of characters to be written to the lcd
@@ -388,7 +388,7 @@ void send_set_display(const uint8_t colors[16][3]);
 void send_set_lcd(const uint8_t data[2][8]);
 ```
 
-```
+```cpp
 /**
  * Non-blocking function that polls for a command header.
  * @return The header recieved (otherwise NULL)
@@ -396,7 +396,7 @@ void send_set_lcd(const uint8_t data[2][8]);
 char poll_header();
 ```
 
-```
+```cpp
 /**
  * Performs a blocking wait for the body of a button_event
  * @return A struct containing the button event data.
@@ -404,7 +404,7 @@ char poll_header();
 union button_event get_button_event();
 ```
 
-```
+```cpp
 /**
  * Destroys a blue_trellis object
  */
@@ -420,7 +420,7 @@ bluetooth that will be sent and handled by the operating system.
 The simplest example of this is in the reset_scene function from 
 [trellis_main.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/trellis_main.cpp)
 
-```
+```cpp
 void reset_scene(blue_trellis &bt)
 {
 	const uint8_t select_frame[16][3] = {
@@ -458,7 +458,7 @@ defined in the constants above.
 A more complicated set example can be found in the draw_frame() funciton from
 [dummy_animation.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/dummy_animation.cpp)
 
-```
+```cpp
 void dummy_animation::draw_frame(int number)
 {
 	const uint8_t color[3] = { 0xFF, 0xFF, 0xFF };
@@ -489,7 +489,7 @@ attempts to send too many commands over bluetooth, the operating systems
 internal transmission buffer will become full and will throw an exception.
 In general, frames should be sent with a period no less than 20ms.
 
-```
+```cpp
 void dummy_animation::update()
 {
 	// Get the time between this frame and the last
@@ -522,7 +522,7 @@ recieved on the PC side: a button event.
 For more details see the example from select_scene() in [trellis_main.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/trellis_main.cpp). The function gets the header and uses it
 to select the next scene that will be displayed on the trellis.
 
-```
+```cpp
 scene *select_scene(blue_trellis &bt)
 {
 	char header = bt.poll_header();
