@@ -19,8 +19,6 @@ dummy_animation::dummy_animation(blue_trellis *bt)
 	frame_count = 1;
 }
 
-
-
 void dummy_animation::update()
 {
 	// Get the time between this frame and the last

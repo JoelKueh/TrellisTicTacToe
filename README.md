@@ -38,7 +38,219 @@ In general, the code is designed to be extensible and reusable.
 
 ### libuart
 
+The libuart library is designed to simplify sending and recieving of commands
+over a UART bridge. In this project, we connect this UART bridge to a HC-06
+UART to bluetooth converter and connect our device to a PC. This library
+is not specific to that application however, and can be used on its own.
+
+#### Functions
+
+The functions provided by this library are as follows:
+
+```
+/**
+ * Initializes UART communication on pins RB7 and RB8 at 38400 baud.
+ */
+void uart_init(void);
+```
+
+```
+/**
+ * Checks if the receive buffer is empty.
+ * @return 1 if the buffer has contents.
+ */
+int uart_empty(void);
+```
+
+```
+/**
+ * Send 'bytes' bytes of data over UART, preceeded by a command header.
+ * @param header The header byte of the command.
+ * @param data The address of the data to be sent.
+ * @param bytes The number of data bytes in the command.
+ */
+void send_command(unsigned char header, unsigned char *data, unsigned char bytes);
+```
+
+```
+/**
+ * Consumes and returns the header byte of the top command in the queue.
+ * Blocks if there is no data in the UART buffer.
+ * @return The header byte of the current command.
+ */
+unsigned char get_command_header();
+```
+
+```
+/**
+ * Unpacks 'bytes' bytes of data into a command data array.
+ * Blocks until enough bytes are read from the UART buffer.
+ * @param com The address of a command where the data should be inserted.
+ * @param bytes The number of bytes to take from the buffer.
+ */
+void get_command_body(unsigned char *dest, unsigned char bytes);
+```
+
+#### Usage
+
+Before this library can be used, you must call the initialization function
+uart_init().
+
+After this is done, you can immmediately begin sending and recieving data.
+Sending data with this library is relatively easy. You must define a command
+consisting of a header character and a body then send it as a series of bytes
+with the function send_command(). This is best shown in the poll_and_update()
+function in [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
+
+```
+void poll_and_update(void)
+{
+    union key_event events[30];
+    union key_event *key = events;
+    struct button_event button;
+    int num_events;
+    
+    await_frame();
+    display_show();
+    num_events = get_button_events(events, 30);
+    delay_us(500);
+    while (num_events--) {
+        button.is_rising = key->edge == EDGE_RISING;
+        button.button_num = key->num;
+        send_button_event(&button);
+    }
+}
+```
+
+This function collects a set of button_events from the trellis then sends them
+one over the buffer using the send_button_event() function defined above.
+
+```
+void send_button_event(const struct button_event *command)
+{
+    send_command(
+            BUTTON_EVENT_HEADER,
+            (unsigned char *)command,
+            sizeof(struct button_event)
+    );
+}
+```
+
+Handling command input is not much different. A good example of this is the
+process_uart() function from [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
+
+```
+void process_uart(void)
+{
+    while (!uart_empty()) {
+        char header = get_command_header();
+        parse_uart_header(header);
+    }
+}
+```
+
+This function empties the UART buffer. It first get a header byte from the
+buffer and processes that byte as a command header in the parse_uart_header()
+function.
+
+```
+void parse_uart_header(char header)
+{
+    switch (header) {
+        case SET_LED_HEADER:
+            handle_set_led();
+            break;
+        case SET_DISPLAY_HEADER:
+            handle_set_display();
+            break;
+        case SET_LCD_HEADER:
+            handle_set_lcd();
+            break;
+        default:
+            break;
+    }
+}
+```
+
+Depending on what byte it recieves, it makes a call to handle the given event.
+For example, if the event is a set_led command, then it makes a call to
+handle_set_led()
+
+```
+void handle_set_led()
+{
+    struct set_led command;
+    unpack_set_led(&command);
+    
+    set_led(command.led_num, command.color[0],
+        command.color[1], command.color[2]);
+}
+```
+
+In this function it unpacks the command into a struct then executes the
+corresponding command to write the data to the trellis.
+
 ### libuarttrellis
+
+Libuarttrellis is a rather simple library. As was stated above, it wraps up
+libtrellis, liblcd, and libuart into a single library that makes the PIC
+function as a bluetooth, rgb gamepad.
+
+#### Functions
+
+The functions are defined as follows.
+
+```
+/**
+ * Initializes i2c communication with the I2C2 peripheral as well as 38400
+ * baud UART communication with peripheral U1 with TX on RB7 and RX on RB8.
+ * Also sends i2c initializing commands to the LCD and trellis over i2c.
+ * Initializes TMR3 as a frame timer for the trellis.
+ */
+void bluetrellis_init(void);
+```
+
+```
+/**
+ * Polls for button presses and sends a draw/show command to the display.
+ * This function runs at a period of 20ms or greater. If 20ms has not
+ * passed since the last call, the function will perform a blocking delay
+ * until it has. Sends all button events over UART immediately.
+ */
+void poll_and_update(void);
+```
+
+```
+/**
+ * Handles commands sent over UART from the bluetooth device.
+ */
+void process_uart(void);
+```
+
+#### Usage
+
+There is really only one proper way to use this library. It is shown in
+[bluetrellis_main.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/bluetrellis_main.c)
+
+```
+int main(void) {
+    setup();
+    
+    bluetrellis_init();
+    
+    while (1) {
+        poll_and_update();
+        process_uart();
+    }
+    
+    return 0;
+}
+```
+
+First the library is initialized with the bluetrellis_init() function.
+Then the library repeatedly calls poll_and_update() and process_uart().
+This allows the PIC to handle incomming commands and forward button events
+over UART.
 
 ## PC
 
