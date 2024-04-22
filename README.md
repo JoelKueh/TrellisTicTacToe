@@ -413,6 +413,13 @@ union button_event get_button_event();
 
 #### Usage
 
+Before this library can be used, one must simply construct an object.
+The constructor for this class takes one parameter which is the address.
+
+```cpp
+blue_trellis bt = blue_trellis(bluetooth_addr);
+```
+
 Sending commands using this library is relatively self explanatory.
 Calling different send functions queues up commands to be sent over the
 bluetooth that will be sent and handled by the operating system.
@@ -496,7 +503,7 @@ void dummy_animation::update()
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
 
-	// If 500 milliseconds have passed, update the time.
+	// If 50 milliseconds have passed, update the time.
 	if (duration.count() > 50) {
 		draw_frame(frame_count++);
 
