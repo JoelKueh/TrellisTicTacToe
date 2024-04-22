@@ -8,8 +8,8 @@
 #include "mole_whacker.h"
 #include "calculator.h"
 
-//const std::string bluetooth_addr = "00:14:03:05:5E:92";
-const std::string bluetooth_addr = "98:D3:31:FD:73:7F";
+const std::string bluetooth_addr = "00:14:03:05:5E:92";
+//const std::string bluetooth_addr = "98:D3:31:FD:73:7F";
 
 scene *get_scene(blue_trellis *bt, union blue_trellis::button_event event)
 {

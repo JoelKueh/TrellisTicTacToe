@@ -1,16 +1,14 @@
 /*
- * Date: 3/21/2024
- * Name: Joel Kuehne
- * Student ID number: 5751841
+ * Date: 4/22/2024
+ * Main Author(s): Joel Kuehne
  * Course number: EE 2361
  * Term: Spring 2024
- * Lab/assignment number: Lab 5
- * Short Program Description: Header for a library that handles writes to an
- * I2C bus. Allows for buffered, non-blocking transmission by using interrupts.
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that simplifies the process
+ * of using UART for asynchronous command transmission and reception.
+ * Commands sent consist of a header and a body.
  */
 
-// This is a guard condition so that contents of this file are not included
-// more than once.  
 #ifndef LIBUART_H
 #define	LIBUART_H
 
@@ -21,12 +19,12 @@ extern "C" {
 #endif /* __cplusplus */
     
     /**
-     * Initializes UART communication on pins RB7 and RB8.
+     * Initializes UART communication on pins RB7 and RB8 at 38400 baud.
      */
     void uart_init(void);
     
     /**
-     * Checks if the recieve buffer is empty.
+     * Checks if the receive buffer is empty.
      * @return 1 if the buffer has contents.
      */
     int uart_empty(void);
@@ -40,13 +38,15 @@ extern "C" {
     void send_command(unsigned char header, unsigned char *data, unsigned char bytes);
     
     /**
-     * Consumes and returns the header byte of the top command.
+     * Consumes and returns the header byte of the top command in the queue.
+     * Blocks if there is no data in the UART buffer.
      * @return The header byte of the current command.
      */
     unsigned char get_command_header();
     
     /**
      * Unpacks 'bytes' bytes of data into a command data array.
+     * Blocks until enough bytes are read from the UART buffer.
      * @param com The address of a command where the data should be inserted.
      * @param bytes The number of bytes to take from the buffer.
      */
@@ -56,5 +56,4 @@ extern "C" {
 }
 #endif /* __cplusplus */
 
-#endif	/* XC_HEADER_TEMPLATE_H */
-
+#endif	/* LIBUART_H */

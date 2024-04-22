@@ -1,8 +1,12 @@
 /*
- * File:   libuart.c
- * Author: joel
- *
- * Created on March 29, 2024, 10:28 AM
+ * Date: 4/22/2024
+ * Main Author(s): Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that simplifies the process
+ * of using UART for asynchronous command transmission and reception.
+ * Commands sent consist of a header and a body.
  */
 
 #include "xc.h"
@@ -14,8 +18,7 @@
 #define MAX_IDX (ARRAY_SIZE - 1)
 
 /**
- * Describes a queue that holds a series of commands to be sent over the I2C
- * bus.
+ * Circular buffer for UART transmission and reception.
  */
 struct uart_buffer {
 	unsigned char data[ARRAY_SIZE];
@@ -26,6 +29,11 @@ struct uart_buffer {
 volatile struct uart_buffer tr_queue;
 volatile struct uart_buffer rc_buff;
 
+/**
+ * Macro to push an element to the buffer.
+ * @param buff The buffer to push to.
+ * @param data The data to push.
+ */
 void buffer_push(volatile struct uart_buffer *buff, char data)
 {
     buff->data[buff->w_idx++] = data;
@@ -33,6 +41,11 @@ void buffer_push(volatile struct uart_buffer *buff, char data)
     buff->cnt++;
 }
 
+/**
+ * Macro to pop an element off of a buffer.
+ * @param buff The buffer to pop from.
+ * @return The data that was popped.
+ */
 char buffer_pop(volatile struct uart_buffer *buff)
 {
     while (buff->w_idx == buff->r_idx);
@@ -42,18 +55,27 @@ char buffer_pop(volatile struct uart_buffer *buff)
     return data;
 }
 
+/**
+ * Handles reception of bytes over UART.
+ */
 void __attribute__((__interrupt__, __auto_psv__)) _U1RXInterrupt(void)
 {
     _U1RXIF = 0;
     buffer_push(&rc_buff, U1RXREG);
 }
 
+/**
+ * Handles transmission of bytes over UART.
+ */
 volatile int transmit_waiting = 1;
 void __attribute__((__interrupt__, __auto_psv__)) _U1TXInterrupt(void)
 {
     char data;
     _U1TXIF = 0;
     
+    // If we exit this function without sending data, we will not reenter it
+    // automatically. Therefore we make not of it so we can manually set
+    // the interrupt flag upon the next push.
     if (tr_queue.cnt == 0) {
         transmit_waiting = 1;
         return;
@@ -63,6 +85,9 @@ void __attribute__((__interrupt__, __auto_psv__)) _U1TXInterrupt(void)
     U1TXREG = data;
 }
 
+/**
+ * Initializes UART communication on pins RB7 and RB8 at 38400 baud.
+ */
 void uart_init(void) {
     tr_queue.w_idx = 0;
     tr_queue.r_idx = 0;
@@ -72,17 +97,12 @@ void uart_init(void) {
     rc_buff.r_idx = 0;
     rc_buff.cnt = 0;
     
-    // I think the following two lines are irrelevant. The UART doc
-    // Page 3, when describing the UARTEN bit in UxMODE says that when UARTEN
-    // is set, TRISx are ignored and instead UEN and UTXEN control pins.
     _TRISB7 = 0; // U1TX output
     _TRISB8 = 1; // U1RX input
 
-    U1MODE = 0; // UEN<1:0> bits control the pins
-    // U1BRG = 34; // 115200 baud,
-    // U1MODEbits.BRGH = 1;
+    U1MODE = 0;
     U1MODEbits.BRGH = 0;
-    U1BRG = 25; // 38400 baud (check the calculation with the datasheet)
+    U1BRG = 25; // 38400 baud
     U1MODEbits.UEN = 0;
     U1MODEbits.UARTEN = 1;
     U1STAbits.UTXEN = 1;
@@ -123,7 +143,7 @@ void send_command(unsigned char header, unsigned char *data, unsigned char bytes
 }
 
 /**
- * Consumes and returns the header byte of the top command.
+ * Consumes and returns the header byte of the top command in the queue.
  * @return The header byte of the current command.
  */
 unsigned char get_command_header()
@@ -144,6 +164,10 @@ void get_command_body(unsigned char *dest, unsigned char bytes)
     }
 }
 
+/**
+ * Checks if the recieve buffer is empty.
+ * @return 1 if the buffer has contents.
+ */
 int uart_empty(void)
 {
     return rc_buff.r_idx == rc_buff.w_idx;

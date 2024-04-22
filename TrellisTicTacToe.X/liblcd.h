@@ -1,16 +1,14 @@
 /*
- * Date: 3/21/2024
- * Name: Joel Kuehne
- * Student ID number: 5751841
+ * Date: 4/22/2024
+ * Main Author(s): Debra Johnson
+ * Refactored By: Joel Kuehne
  * Course number: EE 2361
  * Term: Spring 2024
- * Lab/assignment number: Lab 5
- * Short Program Description: Header for a library that handles writes to an
- * I2C bus. Allows for buffered, non-blocking transmission by using interrupts.
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that wraps up a set of
+ * commands that can be sent to the lcd.
  */
 
-// This is a guard condition so that contents of this file are not included
-// more than once.  
 #ifndef LIBLCD_H
 #define	LIBLCD_H
 
@@ -23,45 +21,38 @@ extern "C" {
 #endif /* __cplusplus */
     
     /**
-	 * Writes an lcd command to a circular buffer to be sent over I2C.
+	 * Sends an lcd command over i2c.
      * @param pkg The payload for the command.
 	 */
 	void lcd_cmd(uint8_t pkg);
 
 	/**
-	 * Initializes the lcd. Should only be run once at the beginning of the
-     * initialization of the I2C bus.
+	 * Initializes the lcd. Must not be called before i2c_init() from libi2c.
 	 */
 	void lcd_init(void);
 
 	/**
-	 * Writes a set_cursor command to the buffer to be sent over I2C.
+	 * Sends a lcd set cursor command over i2c.
      * @param row The new row of the cursor.
      * @param col The new column of the cursor.
 	 */
 	void lcd_set_cursor(uint8_t row, uint8_t col);
 
 	/**
-	 * Writes a putc command to the buffer to be sent over I2C
+	 * Sends a putc command to the lcd (sets a single character)
      * @param c The character to put to the buffer.
 	 */
 	void lcd_putc(uint8_t c);
     
     /**
-     * Draws a string of 8 characters to the LCD.
+     * Sends a puts command to the lcd (sets a full string)
      * @param string The string to be drawn.
      */
     void lcd_puts(uint8_t string[]);
-    
-    /**
-     * Draws a buffer of bytes to the lcd display.
-     * @param string The new set of characters to be drawn.
-     */
-    void lcd_set_display(uint8_t buffer[2][8]);
     
 #ifdef	__cplusplus
 }
 #endif /* __cplusplus */
 
-#endif	/* LIBUARTTRELLIS_H */
+#endif	/* LIBLCD_H */
 

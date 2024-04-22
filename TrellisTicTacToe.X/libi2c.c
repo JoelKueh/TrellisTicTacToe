@@ -1,8 +1,12 @@
 /*
- * File:   kuehn348_i2clib.c
- * Author: joel
- *
- * Created on March 20, 2024, 12:23 PM
+ * Date: 4/22/2024
+ * Main Author(s): Debra Johnson, Greta Shields, Alejandro Jimenez
+ * Refactored By: Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that makes it easier to
+ * execute reads and writes over i2c.
  */
 
 #include "xc.h"
@@ -11,7 +15,7 @@
 #include "utills.h"
 
 /**
- * Initializes I2C communication
+ * Begins i2c communication with peripheral I2C2 at 100000 baud.
  */
 void i2c_init(void)
 {
@@ -65,8 +69,8 @@ void i2c_read(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
     I2C2TRN = i2c_addr | 0b1;
     while (!IFS3bits.MI2C2IF);
 
-    // Reading data untill there is only 1 byte left
-    I2C2CONbits.ACKDT = 0;
+    // Reading data until there is only 1 byte left
+    I2C2CONbits.ACKDT = 0; // Reply with master ACK
     while (size-- != 1) {
         I2C2CONbits.RCEN = 1;
         while (I2C2CONbits.RCEN);
@@ -79,7 +83,7 @@ void i2c_read(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
     I2C2CONbits.RCEN = 1;
     while (I2C2CONbits.RCEN);
     *dest++ = I2C2RCV;
-    I2C2CONbits.ACKDT = 1;
+    I2C2CONbits.ACKDT = 1; // Now reply with master NACK
     I2C2CONbits.ACKEN = 1;
     while (I2C2CONbits.ACKEN); // Wait for ACKEN SEND
 
@@ -90,13 +94,13 @@ void i2c_read(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
 }
 
 /**
-   * Executes a blocking send over I2C
-   * @param i2c_addr The address of the thing to send
-   * @param prefix The I2C prefix (likely address bytes)
-   * @param prefix_len The length of the prefix
-   * @param data The data to send
-   * @param data_len The length of the data
-   */
+ * Executes a blocking send over I2C
+ * @param i2c_addr The address of the thing to send
+ * @param prefix The I2C prefix (likely address bytes)
+ * @param prefix_len The length of the prefix
+ * @param data The data to send
+ * @param data_len The length of the data
+ */
 void i2c_send(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
         const uint8_t *data, uint8_t data_len)
 {

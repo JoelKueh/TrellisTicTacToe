@@ -1,16 +1,14 @@
 /*
- * Date: 3/21/2024
- * Name: Joel Kuehne
- * Student ID number: 5751841
+ * Date: 4/22/2024
+ * Main Author(s): Debra Johnson, Greta Shields, Alejandro Jimenez
+ * Refactored By: Joel Kuehne
  * Course number: EE 2361
  * Term: Spring 2024
- * Lab/assignment number: Lab 5
- * Short Program Description: Header for a library that handles writes to an
- * I2C bus. Allows for buffered, non-blocking transmission by using interrupts.
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that makes it easier to
+ * execute reads and writes over i2c.
  */
 
-// This is a guard condition so that contents of this file are not included
-// more than once.  
 #ifndef LIBI2C_H
 #define	LIBI2C_H
 
@@ -23,7 +21,7 @@ extern "C" {
 #endif /* __cplusplus */
     
     /**
-     * Begins i2c communication.
+     * Begins i2c communication with peripheral I2C2 at 100000 baud.
      */
     void i2c_init(void);
     
@@ -54,5 +52,5 @@ extern "C" {
 }
 #endif /* __cplusplus */
 
-#endif	/* XC_HEADER_TEMPLATE_H */
+#endif	/* LIBI2C_H */
 

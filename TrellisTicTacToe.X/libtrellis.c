@@ -1,8 +1,12 @@
 /*
- * File:   liblcd.c
- * Author: joel
- *
- * Created on April 9, 2024, 10:02 PM
+ * Date: 4/22/2024
+ * Main Author(s): Greta Shields (Write), Alejandro Jimenez (Read)
+ * Refactored By: Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that wraps up a set of
+ * commands that can be sent to the trellis.
  */
 
 #include "xc.h"
@@ -31,12 +35,23 @@
 #define NEO_TRELLIS_NEOPIX_PIN 3
 #define NUM_LEDS 16
 
+/**
+ * Preforms a blocking delay to wait for the 20ms frame timer.
+ * Resets the frame timer to zero when the function completes.
+ */
 void await_frame(void)
 {
     while (!_T3IF);
+    TMR3 = 0;
     _T3IF = 0;
 }
 
+/**
+ * Sets a keypad event to be tracked or ignored by the trellis.
+ * @param num The number of the key (0-15)
+ * @param edges The edge in question
+ * @param active Whether or not it should be tracked.
+ */
 void set_keypad_event(uint8_t num, uint8_t edge, uint8_t active)
 {
     const uint8_t prefix[2] = {
@@ -53,6 +68,12 @@ void set_keypad_event(uint8_t num, uint8_t edge, uint8_t active)
     i2c_send(TRELLIS_ADDR, prefix, 2, data, 2);
 }
 
+/**
+  * Reads at most max_size button events into a buffer.
+  * @param buffer The buffer to write into.
+  * @param max_size The maximum number of key_events to read.
+  * @return The actual number of key_events read.
+  */
 int get_button_events(union key_event *buffer, uint8_t max_size)
 {
     const uint8_t prefixes[2][2] = {
@@ -71,6 +92,13 @@ int get_button_events(union key_event *buffer, uint8_t max_size)
     return len;
 }
 
+/**
+ * Sends a set led command to the trellis.
+ * @param num The led to set.
+ * @param g The green value.
+ * @param r The red value.
+ * @param b The blue value.
+ */
 void set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 {
     uint8_t prefix[4];
@@ -86,6 +114,10 @@ void set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
     i2c_send(TRELLIS_ADDR, prefix, 4, data, 3);
 }
 
+/**
+ * Sends a set display command to the trellis.
+ * @param colors An array of colors for each led in GRB format.
+ */
 void set_display(uint8_t colors[16][3])
 {
     const uint8_t prefixes[2][4] = {
@@ -99,6 +131,11 @@ void set_display(uint8_t colors[16][3])
     i2c_send(TRELLIS_ADDR, prefixes[1], 4, &(colors[8][0]), 24);
 }
 
+/**
+ * Tells the trellis to update the neopixels with the new values that it has
+ * in it's buffer. This function should be called when you want to see the
+ * new data written by the set_led and set_display commands.
+ */
 void display_show(void)
 {
     const uint8_t prefix[2] = {
@@ -109,6 +146,12 @@ void display_show(void)
     i2c_send(TRELLIS_ADDR, prefix, 2, 0, 0);
 }
 
+/**
+ * Sends the required initialization commands over the trellis. Also,
+ * initializes a 20ms frame timer on TMR3.
+ * 
+ * i2c_init() from libi2c must be called before this function is run.
+ */
 void trellis_init(void)
 {
     uint8_t prefix[5];

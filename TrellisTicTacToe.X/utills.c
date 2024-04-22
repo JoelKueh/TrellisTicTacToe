@@ -1,14 +1,20 @@
 /*
- * File:   utils.c
- * Author: joel
- *
- * Created on April 9, 2024, 10:13 PM
+ * Date: 4/22/2024
+ * Main Author(s): Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: List of macros shared between other libraries.
  */
 
 #include "xc.h"
 
 #include "utills.h"
 
+/**
+ * Delays for 'ms' milliseconds.
+ * @param ms The time in milliseconds.
+ */
 void delay_ms(int ms)
 {
 	while (ms--) {
@@ -17,6 +23,10 @@ void delay_ms(int ms)
 	}
 }
 
+/**
+ * Delays for 'us' microseconds
+ * @param us The time in microseconds.
+ */
 void delay_us(int us)
 {
 	while (us--) {
