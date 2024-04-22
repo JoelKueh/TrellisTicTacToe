@@ -5,6 +5,10 @@
 #include <iomanip>
 #include <sstream>
 
+/**
+ * Constructs a blue_trellis object
+ * @param addr a string containing the address of the bluetooth device
+ */
 blue_trellis::blue_trellis(std::string addr)
 {
 #ifndef BLUE_STDIO
@@ -20,6 +24,10 @@ blue_trellis::blue_trellis(std::string addr)
 	poller = new std::thread([this]() { loop_poll(); });
 }
 
+/**
+ * Entrypoint for the input-handling thread.
+ * Takes data from the bluetooth functions and puts it in a buffer.
+ */
 void blue_trellis::loop_poll()
 {
 	while (true) {
@@ -33,6 +41,13 @@ void blue_trellis::loop_poll()
 	}
 }
 
+/**
+ * Sends a set_led command over bluetooth.
+ * @param num The number of the led to set on the button pad
+ * @param g The green value
+ * @param r The red value
+ * @param b The blue value
+ */
 void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 {
 #ifdef BLUE_STDIO
@@ -46,6 +61,10 @@ void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 #endif
 }
 
+/**
+ * Sends a set_display command over bluetooth
+ * @param colors An array of 16 GRB encoded colors to be displayed
+ */
 void blue_trellis::send_set_display(const uint8_t colors[16][3])
 {
 #ifdef BLUE_STDIO
@@ -62,6 +81,10 @@ void blue_trellis::send_set_display(const uint8_t colors[16][3])
 #endif
 }
 
+/**
+ * Sends a set_lcd command over bluetooth
+ * @param data The array of characters to be written to the lcd
+ */
 void blue_trellis::send_set_lcd(const uint8_t data[2][8])
 {
 #ifdef BLUE_STDIO
@@ -84,6 +107,10 @@ void blue_trellis::send_set_lcd(const uint8_t data[2][8])
 #endif
 }
 
+/**
+ * Non-blocking function that polls for a command header.
+ * @return The header recieved (otherwise NULL)
+ */
 char blue_trellis::poll_header()
 {
 	char header = 0;
@@ -96,6 +123,11 @@ char blue_trellis::poll_header()
 	return header;
 }
 
+/**
+ * Blocking function that waits for the rest of the function body.
+ * @param dest Where to put the data
+ * @param bytes The number of bytes to get
+ */
 void blue_trellis::get_body(uint8_t *dest, int bytes)
 {
 	while (bytes--) {
@@ -105,6 +137,10 @@ void blue_trellis::get_body(uint8_t *dest, int bytes)
 	}
 }
 
+/**
+ * Performs a blocking wait for the body of a button_event
+ * @return A struct containing the button event data.
+ */
 union blue_trellis::button_event blue_trellis::get_button_event()
 {
 	union button_event event;
@@ -172,34 +208,6 @@ union blue_trellis::button_event blue_trellis::get_button_event()
 	return event;
 }
 
-void blue_trellis::print_data()
-{
-#ifdef BLUE_STDIO
-
-#else
-	std::stringstream str;
-	std::string output;
-	unsigned char buffer[30];
-	int bytes = 0;
-	if ((bytes = port->Read((char *)buffer, 30)) == 0)
-		return;
-
-	for (int i = 0; i < bytes; ++i) {
-		if (std::isalpha(buffer[i])) {
-			str << buffer[i];
-		} else {
-			str << "0x" << std::setw(2) << std::setfill('0')
-				<< std::hex << (uint32_t)buffer[i];
-		}
-		str << ", ";
-	}
-	output = str.str();
-	output.pop_back();
-	output.pop_back();
-	std::cout << output << std::flush;
-#endif
-}
-
 #ifdef BLUE_STDIO
 void blue_trellis::print_trellis()
 {
@@ -231,6 +239,9 @@ void blue_trellis::print_trellis()
 }
 #endif
 
+/**
+ * Destroys a blue_trellis object
+ */
 blue_trellis::~blue_trellis()
 {
 	delete poller;
