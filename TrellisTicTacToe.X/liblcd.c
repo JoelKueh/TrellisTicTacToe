@@ -1,8 +1,12 @@
 /*
- * File:   liblcd.c
- * Author: joel
- *
- * Created on April 9, 2024, 10:02 PM
+ * Date: 4/22/2024
+ * Main Author(s): Debra Johnson, Greta Shields, Alejandro Jimenez
+ * Refactored By: Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that wraps up a set of
+ * commands that can be sent to the lcd.
  */
 
 #include "liblcd.h"
@@ -16,129 +20,86 @@
 #define LCD_CONTRAST 0b011100
 
 /**
- * Pushes an LCD command to the buffer.
+ * Sends an lcd command over i2c.
+ * @param pkg The payload for the command.
  */
-void lcd_cmd_async(char pkg)
+void lcd_cmd(uint8_t pkg)
 {
-	volatile struct i2c_command *cmd = i2c_queue_get_top();
-
-	// Wait until there is room in the buffer
-	while (i2c_queue_full());
-
-	// Fill in the data for the command
-	cmd->data[0] = LCD_ADDR;
-	cmd->data[1] = CNTRL_CMD;
-	cmd->data[2] = pkg;
-	cmd->len = 3;
-
-	// Push the command
-	i2c_queue_push();
+    const uint8_t prefix = CNTRL_CMD;
+    i2c_send(LCD_ADDR, &prefix, 1, &pkg, 1);
 }
 
 /**
- * Pushes a set_cursor command to the buffer.
+ * Sends a lcd set cursor command over i2c.
+ * @param row The new row of the cursor.
+ * @param col The new column of the cursor.
  */
-void lcd_set_cursor(char row, char col)
+void lcd_set_cursor(uint8_t row, uint8_t col)
 {
 	char pkg = 0x80 | (row << 6) | col;
-	lcd_cmd_async(pkg);
+	lcd_cmd(pkg);
 }
 
 /**
- * Pushes a print_character command to the buffer.
+ * Sends a putc command to the lcd (sets a single character)
+ * @param c The character to put to the buffer.
  */
-void lcd_putc(char c)
+void lcd_putc(uint8_t c)
 {
-	volatile struct i2c_command *cmd = i2c_queue_get_top();
-
-	while (i2c_queue_full());
-
-	// Fill in the data for the command
-	cmd->data[0] = LCD_ADDR;
-	cmd->data[1] = CNTRL_PUTC;
-	cmd->data[2] = c;
-	cmd->len = 3;
-
-	// Complete the push
-	i2c_queue_push();
+    const uint8_t prefix = CNTRL_PUTC;
+    i2c_send(LCD_ADDR, &prefix, 1, &c, 1);
 }
 
-void lcd_puts(char string[])
+/**
+ * Sends a puts command to the lcd (sets a full string)
+ * @param string The string to be drawn.
+ */
+void lcd_puts(uint8_t string[])
 {
-    volatile struct i2c_command *cmd = i2c_queue_get_top();
-    int i;
+    int i, len;
+    uint8_t data[16];
 
-	while (i2c_queue_full());
-
-	// Fill in the data for the command
-	cmd->data[0] = LCD_ADDR;
-    
     i = 0;
-    while (string[i] != '\0' && i < 9) {
-        cmd->data[(i << 1) + 1] = CNTRL_PUTS;
-        cmd->data[(i << 1) + 2] = string[i];
+    while (string[i] != '\0' && i < 8) {
+        data[i * 2] = CNTRL_PUTS;
+        data[i * 2 + 1] = string[i];
         i++;
     }
-    cmd->data[(i << 1) - 1] = CNTRL_PUTC;
-    cmd->len = (i << 1) + 1;
-
-	// Complete the push
-	i2c_queue_push();
+    data[i * 2 - 2] = CNTRL_PUTC;
+    len = i * 2;
+    
+    i2c_send(LCD_ADDR, 0, 0, data, len);
 }
 
 /**
- * Sends a command without the ISR. Should only be used in initialization.
- */
-void lcd_cmd_block(char pkg)
-{
-	IFS3bits.MI2C2IF = 0;
-	I2C2CONbits.SEN = 1;
-	while (I2C2CONbits.SEN);
-	IFS3bits.MI2C2IF = 0;
-	I2C2TRN = 0b01111100;
-	while (!IFS3bits.MI2C2IF);
-	IFS3bits.MI2C2IF = 0;
-	I2C2TRN = 0b00000000;
-	while (!IFS3bits.MI2C2IF);
-	IFS3bits.MI2C2IF = 0;
-	I2C2TRN = pkg;
-	while (!IFS3bits.MI2C2IF);
-	I2C2CONbits.PEN = 1;
-	while (I2C2CONbits.PEN);
-	IFS3bits.MI2C2IF = 0;
-}
-
-/**
- * Initializes the LCD display
+ * Initializes the lcd. Must not be called before i2c_init() from libi2c.
  */
 void lcd_init()
 {
-	_MI2C2IE = 0;
-
+    // Send initialization commands...
 	delay_ms(40);
 
-	lcd_cmd_block(0b00111000);
+	lcd_cmd(0b00111000);
 	delay_us(27);
-	lcd_cmd_block(0b00111001);
+	lcd_cmd(0b00111001);
 	delay_us(27);
-	lcd_cmd_block(0b00010100);
+	lcd_cmd(0b00010100);
 	delay_us(27);
-	lcd_cmd_block(0b01110000 | (LCD_CONTRAST & 0b1111));
+	lcd_cmd(0b01110000 | (LCD_CONTRAST & 0b1111));
 	delay_us(27);
-	lcd_cmd_block(0b01010100 | ((LCD_CONTRAST & 0b110000) >> 4));
+	lcd_cmd(0b01010100 | ((LCD_CONTRAST & 0b110000) >> 4));
 	delay_us(27);
-    lcd_cmd_block(0b01101100);
+    lcd_cmd(0b01101100);
 
 	delay_ms(200);
 
-	lcd_cmd_block(0b00111000);
+	lcd_cmd(0b00111000);
 	delay_us(27);
-	lcd_cmd_block(0b00001100);
+	lcd_cmd(0b00001100);
 	delay_us(27);
-	lcd_cmd_block(0b00000001);
+	lcd_cmd(0b00000001);
 
 	delay_ms(2);
 
 	_MI2C2IF = 0;
-	_MI2C2IE = 1;
 }

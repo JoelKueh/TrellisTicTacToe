@@ -5,31 +5,32 @@
 #include <iomanip>
 #include <sstream>
 
-#ifdef BLUE_STDIO
-
-#include <deque>
-std::deque<uint8_t> stdio_buffer;
-
-void loop_poll_stdin()
-{
-	while (true) {
-		char c;
-		std::cin >> c;
-		stdio_buffer.push_back(c);
-	}
-}
-
-#endif
-
 blue_trellis::blue_trellis(std::string addr)
 {
-#ifdef BLUE_STDIO
-	poller = new std::thread(loop_poll_stdin);
-#else
+#ifndef BLUE_STDIO
+	std::cout << "Connecting..." << std::endl;
 	this->addr = addr;
 	port = BTSerialPortBinding::Create(addr, 1);
 	port->Connect();
+
+	std::cout << "Connected" << std::endl;
+	std::cout << "Sending Command...\nResponse: " << std::flush;
 #endif
+	// Start a thread that runs the supplied lambda and polls the input.
+	poller = new std::thread([this]() { loop_poll(); });
+}
+
+void blue_trellis::loop_poll()
+{
+	while (true) {
+		char c;
+#ifdef BLUE_STDIO
+		std::cin >> c;
+#else
+		port->Read(&c, 1);
+#endif
+		rx_buffer.push_back(c);
+	}
 }
 
 void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
@@ -40,11 +41,8 @@ void blue_trellis::send_set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
 	colors[num][2] = b;
 	print_trellis();
 #else
-	std::cout << "Connecting..." << std::endl;
 	char buffer[] = { SET_LED_HEADER, (char)num, (char)g, (char)r, (char)b };
 	port->Write(buffer, 5);
-	std::cout << "Connected" << std::endl;
-	std::cout << "Sending Command...\nResponse: " << std::flush;
 #endif
 }
 
@@ -80,39 +78,31 @@ void blue_trellis::send_set_lcd(const uint8_t data[2][8])
 	std::cout << "==============================================="
 		<< std::endl << std::endl;
 #else
-	static char header = SET_DISPLAY_HEADER;
+	static char header = SET_LCD_HEADER;
 	port->Write(&header, 1);
+	port->Write((const char *)data, 16);
 #endif
 }
 
 char blue_trellis::poll_header()
 {
 	char header = 0;
-#ifdef BLUE_STDIO
-	if (!stdio_buffer.empty()) {
-		header = stdio_buffer.front();
-		stdio_buffer.pop_front();
+
+	if (!rx_buffer.empty()) {
+		header = rx_buffer.front();
+		rx_buffer.pop_front();
 	}
-#else
-	port->Read(&header, 1);
-#endif
+
 	return header;
 }
 
 void blue_trellis::get_body(uint8_t *dest, int bytes)
 {
-#ifdef BLUE_STDIO
 	while (bytes--) {
-		while (stdio_buffer.empty());
-		*dest++ = stdio_buffer.front();
-		stdio_buffer.pop_front();
+		while (rx_buffer.empty());
+		*dest++ = rx_buffer.front();
+		rx_buffer.pop_front();
 	}
-#else
-	while (bytes) {
-		int read = port->Read((char *)dest, bytes);
-		bytes -= read;
-	}
-#endif
 }
 
 union blue_trellis::button_event blue_trellis::get_button_event()
@@ -243,10 +233,7 @@ void blue_trellis::print_trellis()
 
 blue_trellis::~blue_trellis()
 {
-#ifdef BLUE_STDIO
 	delete poller;
-#else
 	port->Close();
 	delete port;
-#endif
 }

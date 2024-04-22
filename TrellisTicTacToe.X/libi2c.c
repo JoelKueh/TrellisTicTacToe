@@ -1,134 +1,136 @@
 /*
- * File:   kuehn348_i2clib.c
- * Author: joel
- *
- * Created on March 20, 2024, 12:23 PM
+ * Date: 4/22/2024
+ * Main Author(s): Debra Johnson, Greta Shields, Alejandro Jimenez
+ * Refactored By: Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Lower level library that makes it easier to
+ * execute reads and writes over i2c.
  */
 
 #include "xc.h"
 
 #include "libi2c.h"
-
-#define ARRAY_SIZE 10
-
-/**
- * Describes a queue that holds a series of commands to be sent over the I2C
- * bus.
- */
-struct command_queue {
-	struct i2c_command data[ARRAY_SIZE];
-	int w_idx;
-	int r_idx;
-	int cnt;
-};
-volatile struct command_queue i2c_queue;
-volatile int i2c_is_waiting = 1;
-
-int i2c_queue_full(void)
-{
-    return i2c_queue.cnt == ARRAY_SIZE;
-}
+#include "utills.h"
 
 /**
- * Returns the address of the top of the queue so that an item
- * can be pushed to it.
+ * Begins i2c communication with peripheral I2C2 at 100000 baud.
  */
-volatile struct i2c_command *i2c_queue_get_top()
-{
-	return &i2c_queue.data[i2c_queue.w_idx];
-}
-
-/**
- * Returns the address of the bottom of the queue so that it can be read.
- */
-volatile struct i2c_command *i2c_queue_peek(void)
-{
-	return &i2c_queue.data[i2c_queue.r_idx];
-}
-
-/**
- * Removes an item from the queue, incrementing the read index.
- */
-void i2c_queue_rmv(void)
-{
-	i2c_queue.r_idx++;
-	i2c_queue.r_idx = i2c_queue.r_idx == ARRAY_SIZE ? 0 : i2c_queue.r_idx;
-	i2c_queue.cnt--;
-}
-
-/**
- * Increments the write index of the command queue.
- * Also tells to the ISR to begin sending again if it was waiting.
- */
-void i2c_queue_push(void)
-{
-	// Complete the push
-	i2c_queue.w_idx++;
-	i2c_queue.w_idx = i2c_queue.w_idx == ARRAY_SIZE ? 0 : i2c_queue.w_idx;
-	i2c_queue.cnt++;
-
-	// Set the interrupt flag to enter the ISR if it has exited
-	// without starting a new command.
-	if (i2c_is_waiting) {
-		_MI2C2IF = 1;
-	}
-}
-
-/**
- * Initializes the queue.
- */
-void i2c_queue_init(void)
-{
-	i2c_queue.w_idx = 0;
-	i2c_queue.r_idx = 0;
-	i2c_queue.cnt = 0;
-	for (int i = 0; i < ARRAY_SIZE; ++i)
-	{
-		i2c_queue.data[i].len = 0;
-	}
-}
-
 void i2c_init(void)
 {
 	I2C2CONbits.I2CEN = 0;
 	I2C2BRG = 157;
 	_MI2C2IF = 0;
-	_MI2C2IE = 1;
 	I2C2CONbits.I2CEN = 1;
+}
     
-    i2c_queue_init();
+/**
+ * Executes a blocking read over I2C
+ * @param i2c_addr The address of the thing to read.
+ * @param prefix The I2C prefix (likely address bytes)
+ * @param prefix_len The length of the prefix
+ * @param dest The place to store the result of the read
+ * @param size The size of the read buffer
+ * @param delay The delay between the initialization command and the read.
+ */
+void i2c_read(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
+        uint8_t *dest, uint8_t size, int delay)
+{
+    // Start Condition
+    IFS3bits.MI2C2IF = 0;
+    I2C2CONbits.SEN = 1;
+    while (I2C2CONbits.SEN);
+    IFS3bits.MI2C2IF = 0;
+
+    // Setting Read Location
+    I2C2TRN = i2c_addr;
+    while (!IFS3bits.MI2C2IF);
+    IFS3bits.MI2C2IF = 0;
+    
+    // Sending prefix...
+    while (prefix_len--) {
+        I2C2TRN = *prefix++;
+        while (!IFS3bits.MI2C2IF);
+        IFS3bits.MI2C2IF = 0;
+    }
+    
+    I2C2CONbits.PEN = 1;
+    while (I2C2CONbits.PEN);
+
+    // Delay for slave to prepare its data (this won't work on a multi-master system)
+    delay_us(delay);
+    
+    I2C2CONbits.SEN = 1;
+    while (I2C2CONbits.SEN);
+
+    // Restart to initiate read
+    IFS3bits.MI2C2IF = 0;
+    I2C2TRN = i2c_addr | 0b1;
+    while (!IFS3bits.MI2C2IF);
+
+    // Reading data until there is only 1 byte left
+    I2C2CONbits.ACKDT = 0; // Reply with master ACK
+    while (size-- != 1) {
+        I2C2CONbits.RCEN = 1;
+        while (I2C2CONbits.RCEN);
+        *dest++ = I2C2RCV;
+        I2C2CONbits.ACKEN = 1; // Request new byte
+        while (I2C2CONbits.ACKEN); // Wait for ACKEN SEND
+    }
+    
+    // Receive last byte
+    I2C2CONbits.RCEN = 1;
+    while (I2C2CONbits.RCEN);
+    *dest++ = I2C2RCV;
+    I2C2CONbits.ACKDT = 1; // Now reply with master NACK
+    I2C2CONbits.ACKEN = 1;
+    while (I2C2CONbits.ACKEN); // Wait for ACKEN SEND
+
+    // Stop condition
+    I2C2CONbits.PEN = 1;
+    while (I2C2CONbits.PEN);
+    IFS3bits.MI2C2IF = 0;
 }
 
-void __attribute__((__interrupt__, __auto_psv__)) _MI2C2Interrupt(void)
+/**
+ * Executes a blocking send over I2C
+ * @param i2c_addr The address of the thing to send
+ * @param prefix The I2C prefix (likely address bytes)
+ * @param prefix_len The length of the prefix
+ * @param data The data to send
+ * @param data_len The length of the data
+ */
+void i2c_send(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
+        const uint8_t *data, uint8_t data_len)
 {
-	static int cmd_idx = -1;
-	volatile struct i2c_command *cmd;
+    // Start Condition
+    IFS3bits.MI2C2IF = 0;
+    I2C2CONbits.SEN = 1;
+    while (I2C2CONbits.SEN);
+    IFS3bits.MI2C2IF = 0;
 
-	_MI2C2IF = 0;
+    // Addressing...
+    I2C2TRN = i2c_addr;
+    while (!IFS3bits.MI2C2IF);
+    IFS3bits.MI2C2IF = 0;
+    
+    // Sending prefix...
+    while (prefix_len--) {
+        I2C2TRN = *prefix++;
+        while (!IFS3bits.MI2C2IF);
+        IFS3bits.MI2C2IF = 0;
+    }
 
-	cmd = i2c_queue_peek();
+    // Sending data...
+    while (data_len--) {
+        I2C2TRN = *data++;
+        while (!IFS3bits.MI2C2IF);
+        IFS3bits.MI2C2IF = 0;
+    }
 
-	// If we exit this ISR without queuing another write (e.g. when cmd_queue
-	// is empty) we need to set the interrupt flag upon the next enqueue.
-	if (i2c_queue.cnt == 0) {
-		i2c_is_waiting = 1;
-		return;
-	}
-	// Otherwise we do not want to set the interrupt flag upon enqueue.
-	i2c_is_waiting = 0;
-
-	if (cmd_idx == -1) {
-		I2C2CONbits.SEN = 1;
-		cmd_idx++;
-		return;
-	}
-
-	if (cmd_idx == cmd->len) {
-		cmd_idx = -1;
-		I2C2CONbits.PEN = 1;
-		i2c_queue_rmv();
-		return;
-	}
-
-	I2C2TRN = cmd->data[cmd_idx++];
+    // Stop condition
+    I2C2CONbits.PEN = 1;
+    while (I2C2CONbits.PEN);
+    IFS3bits.MI2C2IF = 0;
 }

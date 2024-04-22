@@ -1,8 +1,11 @@
 /*
- * File:   t4_main.c
- * Author: joel
- *
- * Created on March 23, 2024, 5:07 PM
+ * Date: 4/22/2024
+ * Main Author(s): Joel Kuehne
+ * Course number: EE 2361
+ * Term: Spring 2024
+ * Lab/assignment number: Final Project
+ * Short Program Description: Main file, sets up the PIC as the controller for
+ * a bluetooth gamepad using the libuarttrellis library.
  */
 
 #include "xc.h"
@@ -30,7 +33,7 @@ void setup(void)
 {
     CLKDIVbits.RCDIV = 0; //Set RCDIV=1:1 (default 2:1) 32MHz or FCY/2=16M
     
-    AD1PCFG = 0x9FFF;
+    AD1PCFG = 0xFFFF;
     TRISB = 0x0000;
     LATB = 0x0000;
 }
@@ -41,7 +44,7 @@ int main(void) {
     bluetrellis_init();
     
     while (1) {
-        poll_buttons();
+        poll_and_update();
         process_uart();
     }
     

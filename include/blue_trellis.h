@@ -6,14 +6,14 @@
 
 #include "bsp/BTSerialPortBinding.h"
 
-#ifdef BLUE_STDIO
+#include <deque>
 #include <thread>
-#endif
 
 class blue_trellis {
 public:
 	enum {
 		BUTTON_EVENT_HEADER = 'A',
+		SHOW_HEADER = 'C',
 		SET_LED_HEADER = 'D',
 		SET_DISPLAY_HEADER = 'E',
 		SET_LCD_HEADER = 'F',
@@ -75,12 +75,15 @@ private:
 	 */
 	void get_body(uint8_t *dest, int bytes);
 
+	void loop_poll();
+
 #ifdef BLUE_STDIO
 	void print_trellis();
+#endif
 
 	std::thread *poller;
+	std::deque<uint8_t> rx_buffer;
 	uint8_t colors[16][3];
-#endif
 
 	BTSerialPortBinding *port;
 };

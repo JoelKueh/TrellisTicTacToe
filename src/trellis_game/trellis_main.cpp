@@ -9,6 +9,7 @@
 #include "calculator.h"
 
 const std::string bluetooth_addr = "00:14:03:05:5E:92";
+//const std::string bluetooth_addr = "98:D3:31:FD:73:7F";
 
 scene *get_scene(blue_trellis *bt, union blue_trellis::button_event event)
 {
@@ -51,8 +52,8 @@ void reset_scene(blue_trellis &bt)
 	};
 
 	const uint8_t blank_lcd[2][8] = {
-		{ 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 },
-		{ 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02 }
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
 
 	bt.send_set_display(select_frame);
