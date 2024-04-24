@@ -10,8 +10,8 @@ int r=0;
 float total=0;
 int numOperations=0;
 
-std::string operation[100] = {" "};
-std::string output="0";
+char operation[100] = {" "};
+//std::string output="0";
 
 //enter calculator mode
 calculator::calculator(blue_trellis *bt)
@@ -65,19 +65,19 @@ void calculator::string_to_arr(std::string input) {
 
 void calculator::calc_total() {
 	if(i>0) {
-		if(operation[i]=="+") {
+		if(operation[i]=='+') {
 			total=num[i-1]+num[i];
 			num[i]=total;
 		}
-		else if (operation[i]=="-") {
+		else if (operation[i]=='-') {
 			total=num[i-1]-num[i];
 			num[i]=total;
 		}
-		else if (operation[i]=="*") {
+		else if (operation[i]=='*') {
 			total=num[i-1]*num[i];
 			num[i]=total;
 		}
-		else if (operation[i]=="/") {
+		else if (operation[i]=='/') {
 			total=num[i-1]/num[i];
 			num[i]=total;
 		}
@@ -94,7 +94,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 	}
 	
 	int temp=100;
-	operation[i]=" ";
+	operation[i]=' ';
 	
 	//clear output string
 	for(int l=0; l<2; l++) {
@@ -115,7 +115,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 			break;
 		//addition
 		case 3:
-			operation[i]="+";
+			operation[i]='+';
 			break;
 		case 4:
 			temp=4;
@@ -128,7 +128,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 			break;
 		//subtraction
 		case 7:
-			operation[i]="-";
+			operation[i]='-';
 			break;
 		case 8:
 			temp=7;
@@ -141,22 +141,22 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 			break;
 		//multiplication
 		case 11:
-			operation[i]="*";
+			operation[i]='*';
 			break;
 		//escape
 		case 12:
-			operation[i]="e";
+			operation[i]='e';
 			break;
 		case 13:
 			temp=0;
 			break;
 		//equals
 		case 14:
-			operation[i]="=";
+			operation[i]='=';
 			break;
 		//division
 		case 15:
-			operation[i]="/";
+			operation[i]='/';
 			break;
 	}
 
@@ -174,14 +174,14 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 	}
 
 	//if an operation button was pressed that isn't equals or escape
-	else if(operation[i] != " " && operation[i] != "=" && operation[i] != "e") {
+	else if(operation[i] != ' ' && operation[i] != '=' && operation[i] != 'e') {
 		calc_total();
 		//clear screen
 		bt->send_set_lcd(s);
 		i++;
 	}
 
-	else if(operation[i]=="=") {
+	else if(operation[i]=='=') {
 		calc_total();
 
 		//convert int to string and then to char array
@@ -193,7 +193,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		i++;
 	}
 
-	else if(operation[i]=="e") {
+	else if(operation[i]==' ') {
 		//double check if this works or if the end function needs to be called explicitly
 		end=1;
 	}
