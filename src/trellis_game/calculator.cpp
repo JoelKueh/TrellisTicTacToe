@@ -80,6 +80,7 @@ float calculator::calc_total(float num1, float num2, char op) {
 	else if (op=='/') {
 		return num1 / num2;
 	}
+	return 0;
 }
 
 void calculator::handle_button_event(union blue_trellis::button_event press) {
