@@ -35,6 +35,9 @@
 #define NEO_TRELLIS_NEOPIX_PIN 3
 #define NUM_LEDS 16
 
+#define NEO_TRELLIS_KEY(x) (((x) / 4) * 8 + ((x) % 4))
+#define NEO_TRELLIS_SEESAW_KEY(x) (((x) / 8) * 4 + ((x) % 8))
+
 /**
  * Preforms a blocking delay to wait for the 20ms frame timer.
  * Resets the frame timer to zero when the function completes.
@@ -60,6 +63,7 @@ void set_keypad_event(uint8_t num, uint8_t edge, uint8_t active)
     uint8_t data[2];
     union key_state ks;
     
+    num = NEO_TRELLIS_KEY(num);
     data[0] = num;
     ks.raw = 0;
     ks.state = active;
@@ -87,6 +91,10 @@ int get_button_events(union key_event *buffer, uint8_t max_size)
     len = len > max_size ? max_size : len;
     if (len != 0) {
         i2c_read(TRELLIS_ADDR, prefixes[1], 2, (uint8_t *)buffer, len, 1000);
+    }
+    
+    for (int i = 0; i < len; ++i) {
+        buffer[i].num = NEO_TRELLIS_SEESAW_KEY(buffer[i].num);
     }
     
     return len;

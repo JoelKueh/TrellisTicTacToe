@@ -57,7 +57,10 @@ void dummy_animation::consume_button_presses()
 {
 	char header = bt->poll_header();
 	if (header == blue_trellis::BUTTON_EVENT_HEADER) {
-		bt->get_button_event();
+		union blue_trellis::button_event event;
+		event = bt->get_button_event();
+		std::cout << "Button " << (int)event.button_num;
+		std::cout << " is rising? " << (int)event.is_rising << std::endl;
 	}
 }
 

@@ -14,8 +14,9 @@ public:
 private:
 	blue_trellis *bt;
 	int num_buff[2];
-	bool end = 0;
-	bool is_second_num = false;
+	bool end;
+	bool is_second_num;
+	char last_op;
 
 	void handle_button_event(union blue_trellis::button_event press);
 	float calc_total(float num1, float num2, char op);

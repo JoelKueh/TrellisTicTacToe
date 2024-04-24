@@ -10,23 +10,29 @@ calculator::calculator(blue_trellis *bt)
 	this->bt = bt;
 	//left 3 columns be blue to represent 0-11, and right column be red to represent +, -, *, /
 	const uint8_t display_leds [16][3] = {
-	{0x00, 0x00, 0x80}, //blue, button 0
-	{0x00, 0x00, 0x80}, //blue, button 1
-	{0x00, 0x00, 0x80}, //blue, button 2
-	{0x00, 0x80, 0x00}, //red, button 3
-	{0x00, 0x00, 0x80}, //blue, button 4
-	{0x00, 0x00, 0x80}, //blue, button 5
-	{0x00, 0x00, 0x80}, //blue, button 6
-	{0x00, 0x80, 0x00}, //red, button 7
-	{0x00, 0x00, 0x80}, //blue, button 8
-	{0x00, 0x00, 0x80}, //blue, button 9
-	{0x00, 0x00, 0x80}, //blue, button 10
-	{0x00, 0x80, 0x00}, //red, button 11
-	{0x80, 0x00, 0x00}, //green, button 12
-	{0x00, 0x00, 0x80}, //blue, button 13
-	{0x00, 0x80, 0x80}, //purple, button 14
-	{0x00, 0x80, 0x00} //red, button 15
+		{0x00, 0x00, 0x80}, //blue, button 0
+		{0x00, 0x00, 0x80}, //blue, button 1
+		{0x00, 0x00, 0x80}, //blue, button 2
+		{0x00, 0x80, 0x00}, //red, button 3
+		{0x00, 0x00, 0x80}, //blue, button 4
+		{0x00, 0x00, 0x80}, //blue, button 5
+		{0x00, 0x00, 0x80}, //blue, button 6
+		{0x00, 0x80, 0x00}, //red, button 7
+		{0x00, 0x00, 0x80}, //blue, button 8
+		{0x00, 0x00, 0x80}, //blue, button 9
+		{0x00, 0x00, 0x80}, //blue, button 10
+		{0x00, 0x80, 0x00}, //red, button 11
+		{0x00, 0x80, 0x80}, //purple, button 12
+		{0x00, 0x00, 0x80}, //blue, button 13
+		{0x80, 0x00, 0x00}, //green, button 14
+		{0x00, 0x80, 0x00} //red, button 15
 	};
+
+	num_buff[0] = 0;
+	num_buff[1] = 0;
+	end = 0;
+	is_second_num = 0;
+	last_op = ' ';
 
 	//sets display with all values set in display_leds
 	bt->send_set_display(display_leds);
@@ -168,26 +174,29 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 
 	else if(input_op=='=') {
 		//convert int to string and then to char array
-		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
+		num_buff[0] = calc_total(num_buff[0], num_buff[1], last_op);
 		std::string trashStr= num_to_string(num_buff[0]);
 		update_lcd(trashStr);
 
 		is_second_num = false;
 		num_buff[0] = 0;
 		num_buff[1] = 0;
+		last_op = ' ';
 	}
 
 	//if an input_op button was pressed that isn't equals or escape
 	else if(input_op != ' ') {
 		if (!is_second_num) {
 			is_second_num = true;
+			last_op = input_op;
 			return;
 		}
 
-		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
+		num_buff[0] = calc_total(num_buff[0], num_buff[1], last_op);
 		std::string trashStr= num_to_string(num_buff[0]);
 		update_lcd(trashStr);
 		num_buff[1] = 0;
+		last_op = input_op;
 	}
 }
 
