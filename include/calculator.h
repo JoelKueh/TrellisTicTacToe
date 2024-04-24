@@ -16,7 +16,6 @@ private:
 	int num_buff[2];
 	bool end = 0;
 	bool is_second_num = false;
-	char op;
 
 	void handle_button_event(union blue_trellis::button_event press);
 	float calc_total(float num1, float num2, char op);

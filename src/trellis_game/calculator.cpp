@@ -168,6 +168,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 
 	else if(input_op=='=') {
 		//convert int to string and then to char array
+		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
 		std::string trashStr= num_to_string(num_buff[0]);
 		update_lcd(trashStr);
 
