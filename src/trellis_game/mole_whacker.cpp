@@ -7,8 +7,7 @@
 
 #define NOMOLE 16
 
-mole_whacker::mole_whacker(blue_trellis *bt)
-{
+mole_whacker::mole_whacker(blue_trellis *bt) {
 	this->bt = bt;
 	game_score=0;
 	end=false;
@@ -109,8 +108,7 @@ void mole_whacker::handle_button_press(union blue_trellis::button_event press) {
 
 }
 
-void mole_whacker::update()
-{
+void mole_whacker::update() {
 	// Get the time between this frame and the last
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
@@ -141,14 +139,11 @@ void mole_whacker::update()
 	}
 }
 
-bool mole_whacker::is_done()
-{
-
+bool mole_whacker::is_done() {
 	return end;
 }
 
-mole_whacker::~mole_whacker()
-{
+mole_whacker::~mole_whacker() {
 	delete start_time;
 	delete last_time;
 
