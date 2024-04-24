@@ -45,6 +45,8 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 	else {
 		bt->send_set_led(press.button_num, 0x30, 0xD5, 0xC8); //turqoise
 	}
+
+	player=!player;
 	
 
 }
