@@ -38,6 +38,9 @@
 #define NEO_TRELLIS_KEY(x) (((x) / 4) * 8 + ((x) % 4))
 #define NEO_TRELLIS_SEESAW_KEY(x) (((x) / 8) * 4 + ((x) % 8))
 
+//#define NEO_TRELLIS_KEY(x) (((x) >> 2) << 3 + ((x) & 3))
+//#define NEO_TRELLIS_SEESAW_KEY(x) (((x) >> 3) << 2 + ((x) & 0b1111))
+
 /**
  * Preforms a blocking delay to wait for the 20ms frame timer.
  * Resets the frame timer to zero when the function completes.
@@ -201,7 +204,7 @@ void trellis_init(void)
     // Initialize keypad tracking for every button
     prefix[0] = SEESAW_KEYPAD_BASE;
     prefix[1] = SEESAW_KEYPAD_BASE;
-    for (int i = 0; i < 16; ++i) {
+    for (unsigned int i = 0; i < 16; ++i) {
         set_keypad_event(i, EDGE_FALLING, 1);
         set_keypad_event(i, EDGE_RISING, 1);
     }
