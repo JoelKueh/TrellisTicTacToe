@@ -4,8 +4,6 @@
 
 #define INVALIDNUM 100
 
-//std::string output="0";
-
 //enter calculator mode
 calculator::calculator(blue_trellis *bt)
 {
@@ -51,8 +49,8 @@ void calculator::update_lcd(std::string input) {
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
-
 	int r=0;
+
 	for (int p = 0; p < 2; p++) {
 		for(int q = 0; q < 8; q++) {
 			lcd_buff[p][q] = input.at(r);
@@ -64,6 +62,8 @@ void calculator::update_lcd(std::string input) {
 			}
 		}
     }
+
+	//can we get rid of this? seems redundant with the func also being called when input.length()==r
 	bt->send_set_lcd(lcd_buff);
 }
 
@@ -153,16 +153,12 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		num_buff[is_second_num] *= 10;
 		num_buff[is_second_num] += input_num;
 
-		if (!is_second_num) {
-			is_second_num = true;
-		}
 
-		//convert int to string and then to char array
+		//convert int to string and then to char array and lcd_print
 		std::string trashStr = num_to_string(num_buff[is_second_num]);
 		update_lcd(trashStr);
 	}
 	else if(input_op=='e') {
-		//double check if this works or if the end function needs to be called explicitly
 		end=true;
 	}
 
@@ -176,6 +172,11 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 
 	//if an input_op button was pressed that isn't equals or escape
 	else if(input_op != ' ') {
+		if (!is_second_num) {
+			is_second_num = true;
+			return;
+		}
+
 		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
 		std::string trashStr= num_to_string(num_buff[0]);
 		update_lcd(trashStr);
@@ -185,7 +186,6 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 //what to do when you need to update
 void calculator::update()
 {
-
 	//declares a variable of type button_event
 	union blue_trellis::button_event event;
 	char header = bt->poll_header();
@@ -211,6 +211,6 @@ bool calculator::is_done()
 //destroy, get rid, kill scene
 calculator::~calculator()
 {
-	//delete event;
-	//Whatever gets created for this scene needs to be deleted here
+
+
 }
