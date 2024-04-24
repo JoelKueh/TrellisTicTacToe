@@ -1,9 +1,9 @@
 
 #include "mole_whacker.h"
+
 #include <chrono>
 #include <cstdlib>
-
-using namespace std::chrono;
+#include <sstream>
 
 #define NOMOLE 16
 

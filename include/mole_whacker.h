@@ -5,6 +5,10 @@
 #include "scene.h"
 #include "blue_trellis.h"
 
+#include <chrono>
+
+using namespace std::chrono;
+
 class mole_whacker : public scene {
 public:
 	mole_whacker(blue_trellis *bt);
