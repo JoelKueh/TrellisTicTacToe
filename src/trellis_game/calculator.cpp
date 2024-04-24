@@ -78,6 +78,9 @@ float calculator::calc_total(float num1, float num2, char op) {
 		return num1 * num2;
 	}
 	else if (op=='/') {
+		if (num2 == 0) {
+			return 0;
+		}
 		return num1 / num2;
 	}
 	return 0;
@@ -169,6 +172,8 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		update_lcd(trashStr);
 
 		is_second_num = false;
+		num_buff[0] = 0;
+		num_buff[1] = 0;
 	}
 
 	//if an input_op button was pressed that isn't equals or escape
@@ -181,6 +186,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
 		std::string trashStr= num_to_string(num_buff[0]);
 		update_lcd(trashStr);
+		num_buff[1] = 0;
 	}
 }
 
