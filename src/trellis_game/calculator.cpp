@@ -1,5 +1,6 @@
 
 #include "calculator.h"
+#include <sstream>
 
 int end=0;
 uint8_t s[2][8];
