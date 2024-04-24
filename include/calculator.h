@@ -13,13 +13,16 @@ public:
 	virtual ~calculator();
 private:
 	blue_trellis *bt;
+	int num_buff[2];
+	bool end = 0;
+	bool is_second_num = false;
+	char op;
+
 	void handle_button_event(union blue_trellis::button_event press);
-	void calc_total();
-	void string_to_arr(std::string input);
+	float calc_total(float num1, float num2, char op);
+	void update_lcd(std::string num);
 	std::string num_to_string(float num);
 	std::string num_to_string(int num);
-
-
 };
 
 #endif /* CALCULATOR_H */

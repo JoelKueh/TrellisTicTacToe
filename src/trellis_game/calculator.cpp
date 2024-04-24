@@ -2,16 +2,8 @@
 #include "calculator.h"
 #include <sstream>
 
-int end=0;
-uint8_t s[2][8];
+#define INVALIDNUM 100
 
-int num[100]={0};
-int i=0;
-int r=0;
-float total=0;
-int numOperations=0;
-
-char operation[100] = {" "};
 //std::string output="0";
 
 //enter calculator mode
@@ -54,37 +46,39 @@ std::string calculator::num_to_string(float num) {
 	return ss.str();
 }
 
-void calculator::string_to_arr(std::string input) {
+void calculator::update_lcd(std::string input) {
+	uint8_t lcd_buff[2][8] = {
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
+	};
+
+	int r=0;
 	for (int p = 0; p < 2; p++) {
 		for(int q = 0; q < 8; q++) {
-			s[p][q]=input.at(r);
+			lcd_buff[p][q] = input.at(r);
 			r++;
+
+			if (input.length() == r) {
+				bt->send_set_lcd(lcd_buff);
+				return;
+			}
 		}
     }
-	r=0;
+	bt->send_set_lcd(lcd_buff);
 }
 
-void calculator::calc_total() {
-	if(i>0) {
-		if(operation[i]=='+') {
-			total=num[i-1]+num[i];
-			num[i]=total;
-		}
-		else if (operation[i]=='-') {
-			total=num[i-1]-num[i];
-			num[i]=total;
-		}
-		else if (operation[i]=='*') {
-			total=num[i-1]*num[i];
-			num[i]=total;
-		}
-		else if (operation[i]=='/') {
-			total=num[i-1]/num[i];
-			num[i]=total;
-		}
+float calculator::calc_total(float num1, float num2, char op) {
+	if(op=='+') {
+		return num1 + num2;
 	}
-	else {
-		total=num[i];
+	else if (op=='-') {
+		return num1-num2;
+	}
+	else if (op=='*') {
+		return num1 * num2;
+	}
+	else if (op=='/') {
+		return num1 / num2;
 	}
 }
 
@@ -94,111 +88,98 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		return;
 	}
 	
-	int temp=100;
-	operation[i]=' ';
-	
-	//clear output string
-	for(int l=0; l<2; l++) {
-		for(int m=0; m<8; m++) {
-			s[l][m]=' ';
-		}
-	}
+	int input_num = INVALIDNUM;
+	int input_op = ' ';
 	
 	switch(press.button_num) {
 		case 0:
-			temp=1;
+			input_num=1;
 			break;
 		case 1:
-			temp=2;
+			input_num=2;
 			break;
 		case 2:
-			temp=3;
+			input_num=3;
 			break;
 		//addition
 		case 3:
-			operation[i]='+';
+			input_op='+';
 			break;
 		case 4:
-			temp=4;
+			input_num=4;
 			break;
 		case 5:
-			temp=5;
+			input_num=5;
 			break;
 		case 6:
-			temp=6;
+			input_num=6;
 			break;
 		//subtraction
 		case 7:
-			operation[i]='-';
+			input_op='-';
 			break;
 		case 8:
-			temp=7;
+			input_num=7;
 			break;
 		case 9:
-			temp=8;
+			input_num=8;
 			break;
 		case 10:
-			temp=9;
+			input_num=9;
 			break;
 		//multiplication
 		case 11:
-			operation[i]='*';
+			input_op='*';
 			break;
 		//escape
 		case 12:
-			operation[i]='e';
+			input_op='e';
 			break;
 		case 13:
-			temp=0;
+			input_num=0;
 			break;
 		//equals
 		case 14:
-			operation[i]='=';
+			input_op='=';
 			break;
 		//division
 		case 15:
-			operation[i]='/';
+			input_op='/';
 			break;
 	}
 
 	//if a number button was pressed
-	if(temp < 100) {
-		num[i] *= 10;
-		num[i] += temp;
+	if(input_num != INVALIDNUM) {
+		num_buff[is_second_num] *= 10;
+		num_buff[is_second_num] += input_num;
+
+		if (!is_second_num) {
+			is_second_num = true;
+		}
 
 		//convert int to string and then to char array
-		std::string trashStr= num_to_string(num[i]);
-		string_to_arr(trashStr);
-
-		//print s[2][8] to screen
-		bt->send_set_lcd(s);
+		std::string trashStr = num_to_string(num_buff[is_second_num]);
+		update_lcd(trashStr);
 	}
-
-	//if an operation button was pressed that isn't equals or escape
-	else if(operation[i] != ' ' && operation[i] != '=' && operation[i] != 'e') {
-		calc_total();
-		//clear screen
-		bt->send_set_lcd(s);
-		i++;
-	}
-
-	else if(operation[i]=='=') {
-		calc_total();
-
-		//convert int to string and then to char array
-		std::string trashStr= num_to_string(num[i]);
-		string_to_arr(trashStr);
-
-		//print s[2][8] to screen
-		bt->send_set_lcd(s);
-		i++;
-	}
-
-	else if(operation[i]==' ') {
+	else if(input_op=='e') {
 		//double check if this works or if the end function needs to be called explicitly
-		end=1;
+		end=true;
 	}
 
+	else if(input_op=='=') {
+		//convert int to string and then to char array
+		std::string trashStr= num_to_string(num_buff[0]);
+		update_lcd(trashStr);
+
+		is_second_num = false;
+	}
+
+	//if an input_op button was pressed that isn't equals or escape
+	else if(input_op != ' ') {
+		num_buff[0] = calc_total(num_buff[0], num_buff[1], input_op);
+		std::string trashStr= num_to_string(num_buff[0]);
+		update_lcd(trashStr);
+	}
 }
 
 //what to do when you need to update
@@ -218,17 +199,13 @@ void calculator::update()
 	//event.is_rising, button is being released when .is_rising==1
 	//read input
 	//tell LCD next char
-	//do whatever operation
+	//do whatever input_op
 }
 
 //keep this returning false, better to just unplug and then replug to power than to code
 bool calculator::is_done()
 {
-	if(end==1) {
-		return true;
-	}
-
-	return false;
+	return end;
 }
 
 //destroy, get rid, kill scene
