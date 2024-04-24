@@ -14,6 +14,7 @@ public:
 private:
 	blue_trellis *bt;
 	bool end;
+	bool player;
 
 	void handle_button_event(union blue_trellis::button_event press);
 };
