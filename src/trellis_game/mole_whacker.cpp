@@ -11,6 +11,7 @@ mole_whacker::mole_whacker(blue_trellis *bt)
 {
 	this->bt = bt;
 	game_score=0;
+	end=false;
 
 	start_time = new high_resolution_clock::time_point(
 			high_resolution_clock::now()
@@ -113,17 +114,24 @@ void mole_whacker::update()
 	// Get the time between this frame and the last
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
+	auto total_time = duration_cast<seconds>(now - *start_time);
 
-	// If 750 milliseconds have passed, update the time.
-	if (duration.count() > 750) {
-		set_rand_mole();
+	//if the game has been running for less than 20 seconds
+	if(total_time.count() < 20) {
+		// If 750 milliseconds have passed, update the time.
+		if (duration.count() > 750) {
+			set_rand_mole();
 
-		// Update our last frame time
-		delete last_time;
-		last_time = new high_resolution_clock::time_point(now);
+			// Update our last frame time
+			delete last_time;
+			last_time = new high_resolution_clock::time_point(now);
+		}
+	}
+
+	else if (total_time.count() > 30) {
+		end=true;
 	}
 	
-
 	//get a button event
 	union blue_trellis::button_event event;
 	char header = bt->poll_header();
@@ -136,7 +144,7 @@ void mole_whacker::update()
 bool mole_whacker::is_done()
 {
 
-	return false;
+	return end;
 }
 
 mole_whacker::~mole_whacker()

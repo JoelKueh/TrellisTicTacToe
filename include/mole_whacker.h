@@ -21,6 +21,7 @@ private:
 	int game_score;
 	high_resolution_clock::time_point *start_time;
 	high_resolution_clock::time_point *last_time;
+	bool end;
 
 	void set_rand_mole();
 	void handle_button_press(union blue_trellis::button_event press);
