@@ -13,6 +13,9 @@ public:
 	virtual ~tictactoe();
 private:
 	blue_trellis *bt;
+	bool end;
+
+	void handle_button_event(union blue_trellis::button_event press);
 };
 
 #endif /* TICTACTOE_H */
