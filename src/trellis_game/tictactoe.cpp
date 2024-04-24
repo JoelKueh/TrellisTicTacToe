@@ -40,10 +40,10 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 	}
 
 	if(player==PONE) {
-			bt->send_set_led(press.button_num, 0x80, 0x80, 0x00); //yellow
+			bt->send_set_led(press.button_num, 0x30, 0xD5, 0xC8); //yellow
 	}
 	else {
-		bt->send_set_led(press.button_num, 0x30, 0xD5, 0xC8); //turqoise
+		bt->send_set_led(press.button_num, 0xD5, 0x30, 0xC8); //pinkish-purple
 	}
 
 	player=!player;
