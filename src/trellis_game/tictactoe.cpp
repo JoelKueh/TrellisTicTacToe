@@ -12,6 +12,7 @@
 tictactoe::tictactoe(blue_trellis *bt) {
 	this->bt = bt;
 
+	//initialize start conditions
 	end=false; 
 	player=PONE;
 	winner=EMPTY;
@@ -51,6 +52,7 @@ tictactoe::tictactoe(blue_trellis *bt) {
 	bt->send_set_display(display_leds);
 }
 
+//check if every position on board is filled
 bool tictactoe::is_full() {
 	for(int i=0; i<16; i++) {
 		if(board[i]==EMPTY) {
@@ -86,21 +88,21 @@ void tictactoe::check_winner(int player_num) {
 		winner=TIE;
 	}
 
+	//create displays for diff winner situations
 	uint8_t one_wins[2][8] = {
 		{ 'P', 'l', 'a', 'y', 'e', 'r', ' ', ' ' },
 		{ 'O', 'n', 'e', ' ', 'W', 'i', 'n', 's' }
 	};
-
 	uint8_t two_wins[2][8] = {
 		{ 'P', 'l', 'a', 'y', 'e', 'r', ' ', ' ' },
 		{ 'T', 'w', 'o', ' ', 'W', 'i', 'n', 's' }
 	};
-
 	uint8_t no_one_wins[2][8] = {
 		{ 'n', 'o', ' ', 'o', 'n', 'e', ' ', ' ' },
 		{ 'w', 'i', 'n', 's', ' ', ':', '(', ' ' }
 	};
 
+	//if someone has won, update LCD
 	if(winner == PONE) {
 		bt->send_set_lcd(one_wins);
 		player=2;
@@ -123,11 +125,13 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 		return;
 	}
 
+	//if someone presses a button after an end condition is reached, then end program
 	if(winner != EMPTY) {
 		end=true;
 		return;
 	}
 
+	//if the button space pressed is EMPTY, then update board
 	if(board[press.button_num] == EMPTY) {
 		if(player==PONE) {
 			bt->send_set_led(press.button_num, 0x30, 0xD5, 0xC8); //pinkish-purple
@@ -140,7 +144,6 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 
 		//switch players
 		player=!player;
-		//player=(player+1)%2;
 
 		//check to see if the player who just played won
 		check_winner(!player);
