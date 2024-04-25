@@ -15,6 +15,13 @@ tictactoe::tictactoe(blue_trellis *bt) {
 	player=PONE;
 	winner=EMPTY;
 
+	//clear lcd display
+	uint8_t lcd_empty[2][8] = {
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
+	};
+	bt->send_set_lcd(lcd_empty);
+
 	//clear board
 	for(int i=0; i<16; i++) {
 		board[i]=EMPTY;
@@ -43,7 +50,7 @@ tictactoe::tictactoe(blue_trellis *bt) {
 	bt->send_set_display(display_leds);
 }
 
-void tictactoe::check_winner(bool player_num) {
+void tictactoe::check_winner(int player_num) {
 	//check rows for a win
 	for(int i=0; i<=12; i=i+4) {
 		if(board[i]==board[i+1] && board[i+1]==board[i+2] && board[i+2]==board[i+3]) {
@@ -77,9 +84,11 @@ void tictactoe::check_winner(bool player_num) {
 
 	if(winner == PONE) {
 		bt->send_set_lcd(one_wins);
+		player=2;
 	}
 	else if(winner == PTWO) {
 		bt->send_set_lcd(two_wins);
+		player=2;
 	}
 
 	return;
@@ -88,6 +97,11 @@ void tictactoe::check_winner(bool player_num) {
 void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 	//only count button presses, not releases
 	if (press.is_rising) {
+		return;
+	}
+
+	if(winner != EMPTY) {
+		end=true;
 		return;
 	}
 
@@ -101,11 +115,12 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 			board[press.button_num]=FULLTWO;
 		}
 
-		//check to see if the current player won
-		check_winner(player);
-
-		//since no one won, switch players
+		//switch players
 		player=!player;
+		//player=(player+1)%2;
+
+		//check to see if the player who just played won
+		check_winner(!player);
 	}
 	
 }

@@ -14,11 +14,11 @@ public:
 private:
 	blue_trellis *bt;
 	bool end;
-	bool player;
+	int player;
 	bool winner;
 	int board[16];
 
-	void check_winner(bool player_num);
+	void check_winner(int player_num);
 	void handle_button_event(union blue_trellis::button_event press);
 };
 
