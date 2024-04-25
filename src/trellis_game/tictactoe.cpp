@@ -57,7 +57,7 @@ bool tictactoe::is_full() {
 			return false;
 		}
 	}
-	winner=TIE;
+
 	return true;
 }
 
@@ -82,8 +82,8 @@ void tictactoe::check_winner(int player_num) {
 	else if(player ==  board[3] && player == board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
 		winner=player;
 	}
-	else if(winner == TIE) {
-
+	else if(is_full()) {
+		winner=TIE;
 	}
 
 	uint8_t one_wins[2][8] = {
