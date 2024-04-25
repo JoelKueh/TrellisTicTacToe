@@ -9,9 +9,12 @@
 
 mole_whacker::mole_whacker(blue_trellis *bt) {
 	this->bt = bt;
+	
+	//set variables to start conditions
 	game_score=0;
 	end=false;
 
+	//start counters
 	start_time = new high_resolution_clock::time_point(
 			high_resolution_clock::now()
 	);
@@ -19,9 +22,10 @@ mole_whacker::mole_whacker(blue_trellis *bt) {
 			high_resolution_clock::now()
 	);
 
+	//seed random num generator
 	srand(system_clock::now().time_since_epoch().count());
 
-	//set the scene, probably start with all white LEDS
+	//begin program will all white LEDS
 	const uint8_t display_leds [16][3] = {
 		{0x80, 0x80, 0x80}, //white, button 0
 		{0x80, 0x80, 0x80}, //white, button 1
@@ -40,10 +44,10 @@ mole_whacker::mole_whacker(blue_trellis *bt) {
 		{0x80, 0x80, 0x80}, //white, button 14
 		{0x80, 0x80, 0x80} //white, button 15
 	};
-	//sets display with all values set in display_leds
 	bt->send_set_display(display_leds);
 }
 
+//convert an int to a string
 std::string mole_whacker::num_to_string(int num) {
 	std::stringstream ss;
 	ss << num;
@@ -51,39 +55,37 @@ std::string mole_whacker::num_to_string(int num) {
 }
 
 void mole_whacker::update_lcd(std::string input) {
+	//clear lcd buffer
 	uint8_t lcd_buff[2][8] = {
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
 
-	int r=0;
+
+	int char_num=0;
 	for (int p = 0; p < 2; p++) {
 		for(int q = 0; q < 8; q++) {
-			lcd_buff[p][q] = input.at(r);
-			r++;
+			lcd_buff[p][q] = input.at(char_num);
+			char_num++;
 
-			if (input.length() == r) {
+			//when end of string reached return
+			if (input.length() == char_num) {
 				bt->send_set_lcd(lcd_buff);
 				return;
 			}
 		}
     }
+
+	//if end of string not reached, then send blank display
+	bt->send_set_lcd(lcd_buff);
 }
 
-//need some sort of polling to call the set_rand_mole every 0.75 s
-//when a new mole is selected the colors of the previous mole should be changed to blank
-//make it so that after however much time it stops generating random moles, giving user enough time to read their score
-//auto end after however much time
-
 void mole_whacker::set_rand_mole() {
-	//clear the previous mole
+	//clear the previous mole's LED
 	bt->send_set_led(selected_mole, 0x80, 0x80, 0x80);
 
 	//select a new mole
 	selected_mole = rand() & 0xF;
-
-	/*generate random number, n, modulo n by 16, shift the the selected_mole left by n bits to set a random mole
-	set the random mole to a different color so that the user knows which one to hit*/
 	bt->send_set_led(selected_mole, 0x00, 0x80, 0x80);
 }
 
@@ -93,30 +95,29 @@ void mole_whacker::handle_button_press(union blue_trellis::button_event press) {
 		return;
 	}
 
+	//if the button pressed is the curren mole
 	if(press.button_num==selected_mole) {
-		//if button pressed==selected_mole, then
 		//add points to game_score
 		game_score += 10;
-		//correct the color of the random mole 
+		//clear mole 
 		bt->send_set_led(selected_mole, 0x80, 0x80, 0x80);
 		selected_mole=NOMOLE;
 	}
 
-	/*display score on LCD display whether button press was success or not*/
+	//display score on LCD display whether button press was success or not
 	std::string lcd_output=num_to_string(game_score);
 	update_lcd(lcd_output);
-
 }
 
 void mole_whacker::update() {
-	// Get the time between this frame and the last
+	// Get the time between this frame and the last, and total time
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
 	auto total_time = duration_cast<seconds>(now - *start_time);
 
 	//if the game has been running for less than 20 seconds
 	if(total_time.count() < 20) {
-		// If 750 milliseconds have passed, update the time.
+		//if 750 milliseconds have passed, update the time, and set new rand mole
 		if (duration.count() > 750) {
 			set_rand_mole();
 
@@ -126,6 +127,7 @@ void mole_whacker::update() {
 		}
 	}
 
+	//if game has been running for more than 30 seconds, kill the program
 	else if (total_time.count() > 30) {
 		end=true;
 	}
@@ -143,8 +145,8 @@ bool mole_whacker::is_done() {
 	return end;
 }
 
+//delete new variables that were created
 mole_whacker::~mole_whacker() {
 	delete start_time;
 	delete last_time;
-
 }
