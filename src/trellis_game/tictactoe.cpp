@@ -134,7 +134,7 @@ void tictactoe::handle_button_event(union blue_trellis::button_event press) {
 			board[press.button_num]=FULLONE;
 		}
 		else {
-			bt->send_set_led(press.button_num, 0xD5, 0x30, 0xC8); //turquoise
+			bt->send_set_led(press.button_num, 0x80, 0x80, 0x00); //yellow
 			board[press.button_num]=FULLTWO;
 		}
 
