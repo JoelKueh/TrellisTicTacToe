@@ -79,7 +79,7 @@ void tictactoe::check_winner(int player_num) {
 		winner=player_num;
 	}
 	//check left diagonal for win
-	else if(player_num ==  board[3] && player == board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
+	else if(player_num ==  board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
 		winner=player_num;
 	}
 	else if(is_full()) {
