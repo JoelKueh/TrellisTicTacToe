@@ -13,7 +13,7 @@ const std::string bluetooth_addr = "00:14:03:05:5E:92";
 
 scene *get_scene(blue_trellis *bt, union blue_trellis::button_event event)
 {
-	if (!event.is_rising)
+	if (event.is_rising)
 		return nullptr;
 
 	switch (event.button_num) {
