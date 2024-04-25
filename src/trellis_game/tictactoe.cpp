@@ -7,6 +7,7 @@
 #define FULLONE 0
 #define FULLTWO 1
 #define EMPTY 2
+#define TIE 3
 
 tictactoe::tictactoe(blue_trellis *bt) {
 	this->bt = bt;
@@ -50,26 +51,39 @@ tictactoe::tictactoe(blue_trellis *bt) {
 	bt->send_set_display(display_leds);
 }
 
+bool tictactoe::is_full() {
+	for(int i=0; i<16; i++) {
+		if(board[i]==EMPTY) {
+			return false;
+		}
+	}
+	winner=TIE;
+	return true;
+}
+
 void tictactoe::check_winner(int player_num) {
 	//check rows for a win
 	for(int i=0; i<=12; i=i+4) {
-		if(board[i]==board[i+1] && board[i+1]==board[i+2] && board[i+2]==board[i+3]) {
+		if(player ==  board[i] && board[i] == board[i+1] && board[i+1] == board[i+2] && board[i+2] == board[i+3]) {
 			winner=player_num;
 		}
 	}
 	//check columns for a win
 	for(int i=0; i<=3; i++) {
-		if(board[i] == board[i+4] && board[i+4] == board[i+8] && board[i+8] == board[i+12]) {
+		if(player ==  board[i] && board[i] == board[i+4] && board[i+4] == board[i+8] && board[i+8] == board[i+12]) {
 			winner=player_num;
 		}
 	}
 	//check right diagonal for win
-	if(board[0] == board[5] && board[5] == board[10] && board[10] == board[15]) {
+	if(player ==  board[0] && board[0] == board[5] && board[5] == board[10] && board[10] == board[15]) {
 		winner=player_num;
 	}
 	//check left diagonal for win
-	else if(board[3]==board[6] && board[6]==board[9] && board[9]==board[12]) {
+	else if(player ==  board[3] && player == board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
 		winner=player;
+	}
+	else if(winner == TIE) {
+
 	}
 
 	uint8_t one_wins[2][8] = {
@@ -82,12 +96,21 @@ void tictactoe::check_winner(int player_num) {
 		{ 'T', 'w', 'o', ' ', 'W', 'i', 'n', 's' }
 	};
 
+	uint8_t no_one_wins[2][8] = {
+		{ 'N', 'o', ' ', 'o', 'n', 'e', ' ', ' ' },
+		{ 'w', 'i', 'n', 's', ' ', ':', '(', '' }
+	};
+
 	if(winner == PONE) {
 		bt->send_set_lcd(one_wins);
 		player=2;
 	}
 	else if(winner == PTWO) {
 		bt->send_set_lcd(two_wins);
+		player=2;
+	}
+	else if(winner == TIE) {
+		bt->send_set_lcd(no_one_wins);
 		player=2;
 	}
 

@@ -15,11 +15,12 @@ private:
 	blue_trellis *bt;
 	bool end;
 	int player;
-	bool winner;
+	int winner;
 	int board[16];
 
 	void check_winner(int player_num);
 	void handle_button_event(union blue_trellis::button_event press);
+	bool is_full();
 };
 
 #endif /* TICTACTOE_H */
