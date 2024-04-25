@@ -98,7 +98,7 @@ void tictactoe::check_winner(int player_num) {
 
 	uint8_t no_one_wins[2][8] = {
 		{ 'N', 'o', ' ', 'o', 'n', 'e', ' ', ' ' },
-		{ 'w', 'i', 'n', 's', ' ', ':', '(', '' }
+		{ 'w', 'i', 'n', 's', ' ', ':', '(', ' ' }
 	};
 
 	if(winner == PONE) {
