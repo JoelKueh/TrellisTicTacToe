@@ -64,23 +64,23 @@ bool tictactoe::is_full() {
 void tictactoe::check_winner(int player_num) {
 	//check rows for a win
 	for(int i=0; i<=12; i=i+4) {
-		if(player ==  board[i] && board[i] == board[i+1] && board[i+1] == board[i+2] && board[i+2] == board[i+3]) {
+		if(player_num ==  board[i] && board[i] == board[i+1] && board[i+1] == board[i+2] && board[i+2] == board[i+3]) {
 			winner=player_num;
 		}
 	}
 	//check columns for a win
 	for(int i=0; i<=3; i++) {
-		if(player ==  board[i] && board[i] == board[i+4] && board[i+4] == board[i+8] && board[i+8] == board[i+12]) {
+		if(player_num ==  board[i] && board[i] == board[i+4] && board[i+4] == board[i+8] && board[i+8] == board[i+12]) {
 			winner=player_num;
 		}
 	}
 	//check right diagonal for win
-	if(player ==  board[0] && board[0] == board[5] && board[5] == board[10] && board[10] == board[15]) {
+	if(player_num ==  board[0] && board[0] == board[5] && board[5] == board[10] && board[10] == board[15]) {
 		winner=player_num;
 	}
 	//check left diagonal for win
-	else if(player ==  board[3] && player == board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
-		winner=player;
+	else if(player_num ==  board[3] && player == board[3] && board[3] == board[6] && board[6] == board[9] && board[9] == board[12]) {
+		winner=player_num;
 	}
 	else if(is_full()) {
 		winner=TIE;
@@ -97,7 +97,7 @@ void tictactoe::check_winner(int player_num) {
 	};
 
 	uint8_t no_one_wins[2][8] = {
-		{ 'N', 'o', ' ', 'o', 'n', 'e', ' ', ' ' },
+		{ 'n', 'o', ' ', 'o', 'n', 'e', ' ', ' ' },
 		{ 'w', 'i', 'n', 's', ' ', ':', '(', ' ' }
 	};
 
