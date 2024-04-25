@@ -5,10 +5,9 @@
 #define INVALIDNUM 100
 
 //enter calculator mode
-calculator::calculator(blue_trellis *bt)
-{
+calculator::calculator(blue_trellis *bt) {
 	this->bt = bt;
-	//left 3 columns be blue to represent 0-11, and right column be red to represent +, -, *, /
+	//left 3 columns be blue to represent 0-9, exit, and =; and right column be red to represent +, -, *, /
 	const uint8_t display_leds [16][3] = {
 		{0x00, 0x00, 0x80}, //blue, button 0
 		{0x00, 0x00, 0x80}, //blue, button 1
@@ -28,6 +27,7 @@ calculator::calculator(blue_trellis *bt)
 		{0x00, 0x80, 0x00} //red, button 15
 	};
 
+	//initiliaze all variables to be empty or default case
 	num_buff[0] = 0;
 	num_buff[1] = 0;
 	end = 0;
@@ -38,12 +38,14 @@ calculator::calculator(blue_trellis *bt)
 	bt->send_set_display(display_leds);
 }
 
+//convert an int to a string
 std::string calculator::num_to_string(int num) {
 	std::stringstream ss;
 	ss << num;
 	return ss.str();
 }
 
+//convert a float to a string
 std::string calculator::num_to_string(float num) {
 	std::stringstream ss;
 	ss << num;
@@ -51,28 +53,36 @@ std::string calculator::num_to_string(float num) {
 }
 
 void calculator::update_lcd(std::string input) {
+	//clear all characters out of LCD buffer
 	uint8_t lcd_buff[2][8] = {
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
-	int r=0;
+
+	int char_num=0;
 
 	for (int p = 0; p < 2; p++) {
 		for(int q = 0; q < 8; q++) {
-			lcd_buff[p][q] = input.at(r);
-			r++;
+			lcd_buff[p][q] = input.at(char_num);
+			char_num++;
 
-			if (input.length() == r) {
+			//when at end of string, display lcd_buff
+			if (input.length() == char_num) {
 				bt->send_set_lcd(lcd_buff);
 				return;
 			}
 		}
     }
 
-	//can we get rid of this? seems redundant with the func also being called when input.length()==r
+	//if end of string not reached, then send blank display
 	bt->send_set_lcd(lcd_buff);
 }
 
+/*
+this should probably be changed to type int, because we're storing the total it calculates in an int, and this is only an int div calculator
+*/
+
+//use selected operation to compute total
 float calculator::calc_total(float num1, float num2, char op) {
 	if(op=='+') {
 		return num1 + num2;
@@ -98,6 +108,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		return;
 	}
 	
+	//initiliaze variables to default values
 	int input_num = INVALIDNUM;
 	int input_op = ' ';
 	
@@ -141,7 +152,7 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 		case 11:
 			input_op='*';
 			break;
-		//escape
+		//exit
 		case 12:
 			input_op='e';
 			break;
@@ -158,26 +169,26 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 			break;
 	}
 
-	//if a number button was pressed
+	//if a number button was pressed update value
 	if(input_num != INVALIDNUM) {
 		num_buff[is_second_num] *= 10;
 		num_buff[is_second_num] += input_num;
 
-
-		//convert int to string and then to char array and lcd_print
-		std::string trashStr = num_to_string(num_buff[is_second_num]);
-		update_lcd(trashStr);
+		//convert int to string and then hand off to update_lcd to display
+		std::string numStr = num_to_string(num_buff[is_second_num]);
+		update_lcd(numStr);
 	}
 	else if(input_op=='e') {
 		end=true;
 	}
-
 	else if(input_op=='=') {
-		//convert int to string and then to char array
+		//update total
 		num_buff[0] = calc_total(num_buff[0], num_buff[1], last_op);
-		std::string trashStr= num_to_string(num_buff[0]);
-		update_lcd(trashStr);
+		//convert int to string and then hand off to update_lcd
+		std::string numStr= num_to_string(num_buff[0]);
+		update_lcd(numStr);
 
+		//set variables back to default values
 		is_second_num = false;
 		num_buff[0] = 0;
 		num_buff[1] = 0;
@@ -186,48 +197,43 @@ void calculator::handle_button_event(union blue_trellis::button_event press) {
 
 	//if an input_op button was pressed that isn't equals or escape
 	else if(input_op != ' ') {
+		//don't use operation if only one number has been sent
 		if (!is_second_num) {
 			is_second_num = true;
 			last_op = input_op;
 			return;
 		}
 
+		//update total
 		num_buff[0] = calc_total(num_buff[0], num_buff[1], last_op);
-		std::string trashStr= num_to_string(num_buff[0]);
-		update_lcd(trashStr);
+		//convert int to string and then hand off to update_lcd
+		std::string numStr= num_to_string(num_buff[0]);
+		update_lcd(numStr);
+		
+		//shift buffer and last operation one to the left
 		num_buff[1] = 0;
 		last_op = input_op;
 	}
 }
 
-//what to do when you need to update
-void calculator::update()
-{
-	//declares a variable of type button_event
+void calculator::update() {
+	//create a variable of type button_event
 	union blue_trellis::button_event event;
 	char header = bt->poll_header();
 	
+	//if a button event has happened then call handle_button_event
 	if (header == blue_trellis::BUTTON_EVENT_HEADER) {
 		event=bt->get_button_event();
 		handle_button_event(event);	
 	}
-
-	//event.button_num is how you access the button that was just pressed
-	//event.is_rising, button is being released when .is_rising==1
-	//read input
-	//tell LCD next char
-	//do whatever input_op
 }
 
-//keep this returning false, better to just unplug and then replug to power than to code
-bool calculator::is_done()
-{
+bool calculator::is_done() {
 	return end;
 }
 
-//destroy, get rid, kill scene
-calculator::~calculator()
-{
+//nothing to destroy in this program
+calculator::~calculator() {
 
 
 }
