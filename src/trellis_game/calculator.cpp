@@ -78,12 +78,8 @@ void calculator::update_lcd(std::string input) {
 	bt->send_set_lcd(lcd_buff);
 }
 
-/*
-this should probably be changed to type int, because we're storing the total it calculates in an int, and this is only an int div calculator
-*/
-
 //use selected operation to compute total
-float calculator::calc_total(float num1, float num2, char op) {
+int calculator::calc_total(float num1, float num2, char op) {
 	if(op=='+') {
 		return num1 + num2;
 	}
