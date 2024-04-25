@@ -19,9 +19,8 @@ private:
 	char last_op;
 
 	void handle_button_event(union blue_trellis::button_event press);
-	int calc_total(float num1, float num2, char op);
+	int calc_total(int num1, int num2, char op);
 	void update_lcd(std::string num);
-	std::string num_to_string(float num);
 	std::string num_to_string(int num);
 };
 

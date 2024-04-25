@@ -45,13 +45,6 @@ std::string calculator::num_to_string(int num) {
 	return ss.str();
 }
 
-//convert a float to a string
-std::string calculator::num_to_string(float num) {
-	std::stringstream ss;
-	ss << num;
-	return ss.str();
-}
-
 void calculator::update_lcd(std::string input) {
 	//clear all characters out of LCD buffer
 	uint8_t lcd_buff[2][8] = {
@@ -79,7 +72,7 @@ void calculator::update_lcd(std::string input) {
 }
 
 //use selected operation to compute total
-int calculator::calc_total(float num1, float num2, char op) {
+int calculator::calc_total(int num1, int num2, char op) {
 	if(op=='+') {
 		return num1 + num2;
 	}
