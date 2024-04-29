@@ -9,7 +9,7 @@ microcontroller.
 
 It doesn't really make sense to have just one public API for this project.
 If anything, that API would be the code that runs on the PC side (libbluetrellis). The entire project is documented in this markdown file, but for grading purposes, I
-recommend that you focus on the libraries libi2c, libtrellis, and libuart
+recommend that you focus on the libraries [libi2c](#libi2c), [libtrellis](#libtrellis), and [libuart](#libuart)
 as sources of our main public library functions.
 
 ## Table of Contents
