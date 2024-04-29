@@ -11,6 +11,18 @@ The entire project is documented in this markdown file, but for grading purposes
 recommend that you focus on the libraries libi2c, libtrellis, and libuart
 as sources of our main public library functions.
 
+## Table of Contents
+
+* [PIC](#pic)
+    * [libi2c](#libi2c)
+    * [libtrellis](#libtrellis)
+    * [liblcd](#liblcd)
+    * [libuart](#libuart)
+    * [libuarttrellis](#libuarttrellis)
+* [PC](#pc)
+    * [libbluetoothserialport](#libbluetoothserialport)
+    * [libbluetrellis](#libbluetrellis)
+
 ## PIC
 
 On the PIC side, there are 5 relevant libraries: libi2c, libuart, libtrellis
@@ -87,35 +99,88 @@ initializes i2c communication through the I2C2 peripheral). They can then
 call functions to read and send over that bus.
 
 ```c
-i2c_init();
+int main(void)
+{
+    i2c_init();
 
-// MANUALLY send a set_led command to the trellis
-const uint8_t write_prefix[2] = {
-    SEESAW_NEOPIXEL_BASE, SEESAW_NEOPIXEL_BUF
-};
-const uint8_t write_data[5] = {
-    0x00, 0x00, 0xFF, 0xFF, 0xFF
-};
-i2c_send(TRELLIS_ADDR, write_prefix, 2, write_data, 5);
+    // MANUALLY send a set_led command to the trellis
+    const uint8_t write_prefix[2] = {
+        SEESAW_NEOPIXEL_BASE, SEESAW_NEOPIXEL_BUF
+    };
+    const uint8_t write_data[5] = {
+        0x00, 0x00, 0xFF, 0xFF, 0xFF
+    };
+    i2c_send(TRELLIS_ADDR, write_prefix, 2, write_data, 5);
 
-// MANUALLY read the number of key events in the trellis
-const uint8_t read_prefix[2] = {
-    SEESAW_KEYPAD_BASE, SEESAW_KEYPAD_COUNT
-};
-uint8_t read_dest;
-i2c_read(TRELLIS_ADDR, read_prefix, 2, read_dest, 1, 500;
+    // MANUALLY read the number of key events in the trellis
+    const uint8_t read_prefix[2] = {
+        SEESAW_KEYPAD_BASE, SEESAW_KEYPAD_COUNT
+    };
+    uint8_t read_dest;
+    i2c_read(TRELLIS_ADDR, read_prefix, 2, read_dest, 1, 500;
+
+    while (1);
+
+    return 0;
+}
 ```
 
 ### libtrellis
 
 The libtrellis library is designed to control a single ADAFRUIT NeoTrellis
-with a PIC24. There is the read and write parts. The write part sends the
-colors to drive the NeoPixels on the NeoTrellis and the read part gets
-button events and sets what is determined to be a button event.
+with a PIC24. As Adafruit does not put out any documentation for their i2c
+protocol or hardware, all code for this library had to be reverse engineered
+from the [Adafruit_Seesaw](https://github.com/adafruit/Adafruit_Seesaw)
+repository on GitHub.
+
+This library makes use of the I2C2 and TMR3 peripherals.
+
+#### Structs
+
+This library provides a couple of structs to make interfacing with the trellis
+easier:
+
+```c
+/**
+ * A struct defining the layout of a key_event recieved from a keypad read.
+ */
+union key_event {
+    struct {
+        uint8_t edge : 2;
+        uint8_t num : 6;
+    };
+    uint8_t raw;
+};
+```
+
+```c
+/**
+ * A struct that defines the layout of a key_state to be sent
+ * in a set_keypad_events command.
+ */
+union key_state {
+    struct {
+        uint8_t state : 1;
+        uint8_t active : 4;
+        uint8_t extra : 3;
+    };
+    uint8_t raw;
+};
+```
 
 #### Functions
 
 The functions provided by this library are as follows:
+
+```c
+/**
+ * Sends the required initialization commands over the trellis. Also,
+ * initializes a 20ms frame timer on TMR3.
+ * 
+ * i2c_init() from libi2c must be called before this function is run.
+ */
+void trellis_init(void);
+```
 
 ```c
 /**
@@ -172,10 +237,12 @@ void set_display(uint8_t colors[16][3]);
  */
 void display_show(void);
 ```
+
 ```c
 /**
  * Sends the required initialization commands over the trellis. Also,
- * initializes a 20ms frame timer on TMR3.
+ * initializes a 20ms frame timer on TMR3. By default, tracks every rising
+ * and falling edge.
  * 
  * i2c_init() from libi2c must be called before this function is run.
  */
@@ -184,70 +251,106 @@ void trellis_init(void);
 
 #### Usage
 
-This library must be used with the libi2c library. This must be initialized
+This library must be used with the libi2c library which must be initialized
 before use. Additionally, trellis_init(void) must be called before any
 other function in libtrellis can be called. Note that trellis_init(void)
-sets the button tracking events to rising and falling edges for all of the buttons.
+sets the button tracking events to rising and falling edges for all the buttons.
 
-To read the latest button events the code should look like this:
-
-```c
-i2c_init();
-trellis_init();
-int numberEvents;
-union key_event *buffer;
-uint8_t max_size = 16;
-numberEvents = get_button_events(buffer, max_size);
-```
-
-To change the event that is tracked for a button the code should follow:
+To initialize the trellis and set the display to blue, you might do something
+like this. It is important to note once again that colors are sent in GRB
+format as opposed to RGB format.
 
 ```c
-i2c_init();
-trellis_init();
-set_keypad_event(0x02, EDGE_FALLING, 0);
-set_keypad_event(0x02, EDGE_RISING, 0);
-```
+int main(void)
+{
+    const uint8_t colors[16][3] = {
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF }
+    };
 
-To set an individual LED to Red on the NeoTrellis the code should look like this:
+    i2c_init();
+    trellis_init();
+    set_display(colors);
 
-```c
-i2c_init();
-trellis_init();
-set_led(0x01, 0x00, 0xff, 0x00);
-display_show(void);
-```
+    while (1);
 
-To set all of the LEDs on the NeoTrellis to a color the code should be as follows:
-
-```c
-i2c_init();
-trellis_init();
-uint8_t colors[16][3];
-for (int i = 0; i < 16; ++i) {
-    colors[i][0] = 0x26;
-    colors[i][1] = 0x26;
-    colors[i][2] = 0x26;
+    return 0;
 }
-set_display(uint8_t colors[16][3]);
-display_show(void);
 ```
 
-When the button LEDs are continuously updates the code should be as follows:
+Below is another example that both initializes the trellis and begins reading
+button presses from it to light up the LEDs. Before it does this, it stops
+tracking the button presses from the 15th button (row 4, column 4).
 
 ```c
-i2c_init();
-trellis_init();
-uint8_t colors[16][3];
-for (int i = 0; i < 16; ++i) {
-    colors[i][0] = 0x26;
-    colors[i][1] = 0x26;
-    colors[i][2] = 0x26;
-}
-while(1) {
-    await_frame(void);
-    set_display(uint8_t colors[16][3]);
-    display_show(void);
+int main(void)
+{
+    const uint8_t blue[3] = { 0x73, 0x00, 0xFF };
+    const uint8_t red[3]  = { 0x00, 0xFF, 0x00 };
+    const uint8_t colors[16][3] = {
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF }
+    };
+
+    // Initialize the display.
+    i2c_init();
+    trellis_init();
+    set_display(colors);
+
+    // Deactivate the 15th key.
+    set_keypad_event(15, EDGE_RISING, 0);
+    set_keypad_event(15, EDGE_FALLING, 0);
+
+    while (1) {
+        union key_event events[30];
+        union key_event *key = events;
+        struct button_event button;
+        int num_events;
+
+        // Wait for the next frame and get button events.
+        await_frame();
+        display_show();
+        num_events = get_button_events(events, 30);
+
+        // Handle the events.
+        while (num_events--) {
+            if (events[num_events].edge == EDGE_RISING) {
+                set_led(key->num, blue[0], blue[1], blue[2]);
+            } else {
+                set_led(key->num, red[0], red[1], red[2]);
+            }
+        }
+    }
+
+    return 0;
 }
 ```
 
@@ -304,25 +407,42 @@ void lcd_puts(uint8_t string[]);
 
 This library must be used with the library libi2c. Before you can send any
 commands to the lcd, you must initialize both the i2c bus (with i2c_init())
-and the display itself (with lcd_init()). If you wanted to send a string
-to the display to start at row zero, column zero, that would look something
-like this:
+and the display itself (with lcd_init()).
+
+If you wanted to send a string to the display to start at row zero,
+column zero, that would look something like this:
 
 ```c
-lcd_init();
-lcd_set_cursor(0, 0);
-lcd_puts("Hello!");
+int main()
+{
+    i2c_init();
+    lcd_init();
+    lcd_set_cursor(0, 0);
+    lcd_puts("Hello!");
+
+    while (1);
+
+    return 0;
+}
 ```
 
 If you wanted to send more data than that, all you would simply have to
 chain these commands together.
 
 ```c
-lcd_init();
-lcd_set_cursor(0, 0);
-lcd_puts("Hello!");
-lcd_set_cursor(1, 7);
-lcd_putc('a');
+int main()
+{
+    i2c_init();
+    lcd_init();
+    lcd_set_cursor(0, 0);
+    lcd_puts("Hello!");
+    lcd_set_cursor(1, 7);
+    lcd_putc('a');
+
+    while (1);
+
+    return 0;
+}
 ```
 
 ### libuart
@@ -385,99 +505,135 @@ void get_command_body(unsigned char *dest, unsigned char bytes);
 Before this library can be used, you must call the initialization function
 uart_init().
 
-After this is done, you can immmediately begin sending and recieving data.
+After this is done, you can immediately begin sending and receiving data.
 Sending data with this library is relatively easy. You must define a command
 consisting of a header character and a body then send it as a series of bytes
-with the function send_command(). This is best shown in the poll_and_update()
-function in [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
+with the function send_command().
+
+The example below sends a single button press over UART. First we define the
+protocol (which includes commands 'A' and 'B'). Then we send one command over
+UART.
 
 ```c
-void poll_and_update(void)
+#define HEADER_A 'A'
+#define HEADER_B 'B'
+
+struct command_a {
+    uint16_t int_data;
+    char char_data;
+};
+
+struct command_b {
+    uint32_t int_data;
+    float float_data;
+};
+
+int main()
 {
-    union key_event events[30];
-    union key_event *key = events;
-    struct button_event button;
-    int num_events;
+    struct command_a com_a;
+
+    uart_init();
+
+    // Send the first command.
+    com_a.is_rising = false;
+    com_a.button_num = 0;
+    send_command(
+        HEADER_A,
+        (uint8_t *)com_a,
+        sizeof(struct command_a)
+    );
     
-    await_frame();
-    display_show();
-    num_events = get_button_events(events, 30);
-    delay_us(500);
-    while (num_events--) {
-        button.is_rising = key->edge == EDGE_RISING;
-        button.button_num = key->num;
-        send_button_event(&button);
-    }
+    while (1);
+
+    return 0;
 }
 ```
 
-This function collects a set of button_events from the trellis then sends them
-one over the buffer using the send_button_event() function defined above.
+Getting command input is not much different, this second example extends the
+above example to mirror commands that it receives after sending the first
+button event.
 
 ```c
-void send_button_event(const struct button_event *command)
+#define HEADER_A 'A'
+#define HEADER_B 'B'
+
+struct command_a {
+    uint16_t int_data;
+    char char_data;
+};
+
+struct command_b {
+    uint32_t int_data;
+    float float_data;
+};
+
+void handle_a(void)
 {
+    struct command_a command;
+    get_command_body((uint8_t *)command, sizeof(struct command_a));
+
+    // Just resend the command over UART
     send_command(
-            BUTTON_EVENT_HEADER,
-            (unsigned char *)command,
-            sizeof(struct button_event)
+        HEADER_A,
+        (uint8_t *)command,
+        sizeof(struct command_a)
     );
 }
-```
 
-Handling command input is not much different. A good example of this is the
-process_uart() function from [libuarttrellis.c](https://github.com/JoelKueh/TrellisTicTacToe/blob/dev_joel_divergent/TrellisTicTacToe.X/libuarttrellis.c)
-
-```c
-void process_uart(void)
+void handle_b(void)
 {
-    while (!uart_empty()) {
-        char header = get_command_header();
-        parse_uart_header(header);
-    }
+    struct command_b command;
+    get_command_body((uint8_t *)command, sizeof(struct command_b));
+
+    // Just resend the command over UART
+    send_command(
+        HEADER_B,
+        (uint8_t *)command,
+        sizeof(struct command_b)
+    );
 }
-```
 
-This function empties the UART buffer. It first get a header byte from the
-buffer and processes that byte as a command header in the parse_uart_header()
-function.
-
-```c
-void parse_uart_header(char header)
+void process_header(char header)
 {
     switch (header) {
-        case SET_LED_HEADER:
-            handle_set_led();
+        case HEADER_A:
+            handle_a();
             break;
-        case SET_DISPLAY_HEADER:
-            handle_set_display();
-            break;
-        case SET_LCD_HEADER:
-            handle_set_lcd();
+        case HEADER_B:
+            handle_b();
             break;
         default:
             break;
     }
 }
-```
 
-Depending on what byte it recieves, it makes a call to handle the given event.
-For example, if the event is a set_led command, then it makes a call to
-handle_set_led()
-
-```c
-void handle_set_led()
+int main()
 {
-    struct set_led command;
-    unpack_set_led(&command);
+    struct command_a com_a;
+
+    uart_init();
+
+    // Send the first command
+    com_a.is_rising = false;
+    com_a.button_num = 0;
+    send_command(
+        HEADER_A,
+        (uint8_t *)com_a,
+        sizeof(struct command_a)
+    );
     
-    set_led(command.led_num, command.color[0],
-        command.color[1], command.color[2]);
+    while (1) {
+        // Look for a valid command header
+        char header = get_command_header();
+        if (header != NULL) {
+            // Call the handling function if we recieved a non-null header.
+            process_header(header);
+        }
+    }
+
+    return 0;
 }
 ```
-
-In this function it unpacks the command into a struct then executes the
-corresponding command to write the data to the trellis.
 
 ### libuarttrellis
 
@@ -538,7 +694,7 @@ int main(void) {
 
 First the library is initialized with the bluetrellis_init() function.
 Then the library repeatedly calls poll_and_update() and process_uart().
-This allows the PIC to handle incomming commands and forward button events
+This allows the PIC to handle incoming commands and forward button events
 over UART.
 
 ## PC
@@ -709,126 +865,96 @@ The constructor for this class takes one parameter which is the address.
 blue_trellis bt = blue_trellis(bluetooth_addr);
 ```
 
-Sending commands using this library is relatively self explanatory.
+Sending commands using this library is relatively self-explanatory.
 Calling different send functions queues up commands to be sent over the
-bluetooth that will be sent and handled by the operating system.
+Bluetooth that will be sent and handled by the operating system.
 
-The simplest example of this is in the reset_scene function from 
-[trellis_main.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/trellis_main.cpp)
+The example below sends commands that reset the trellis display and LCD.
 
 ```cpp
-void reset_scene(blue_trellis &bt)
+int main()
 {
-	const uint8_t select_frame[16][3] = {
-		{ 0x80, 0x00, 0x00 },
-		{ 0x00, 0x80, 0x00 },
-		{ 0x00, 0x00, 0x80 },
-		{ 0x80, 0x80, 0x80 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 },
-		{ 0x00, 0x00, 0x00 }
-	};
+    const uint8_t colors[16][3] = {
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF }
+    };
 
-	const uint8_t blank_lcd[2][8] = {
-		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+	const uint8_t init_lcd[2][8] = {
+		{ 'H', 'e', 'l', 'l', 'o', '!', ' ', ' ' },
 		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
 	};
 
-	bt.send_set_display(select_frame);
-	bt.send_set_lcd(blank_lcd);
+	blue_trellis bt = blue_trellis(bluetooth_addr);
+
+	bt.send_set_display(colors);
+	bt.send_set_lcd(init_lcd);
+
+    return 0;
 }
 ```
 
-This function simply resets the trellis display and lcd to the values
-defined in the constants above.
-
-A more complicated set example can be found in the draw_frame() funciton from
-[dummy_animation.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/dummy_animation.cpp)
+The second example extends the above example to read button events from the
+trellis and send corresponding set_led commands back (just like we did with
+the libtrellis example).
 
 ```cpp
-void dummy_animation::draw_frame(int number)
+int main()
 {
-	const uint8_t color[3] = { 0xFF, 0xFF, 0xFF };
-	const uint8_t numbers[12] = { 0, 1, 2, 3, 7, 11, 15, 14, 13, 12, 8, 4};
-	uint8_t frame[16][3] = { 0 };
-	int i, j, end;
+    const uint8_t blue[3] = { 0x73, 0x00, 0xFF };
+    const uint8_t red[3]  = { 0x00, 0xFF, 0x00 };
 
-	i = number % 12;
-	j = 11;
-	end = (number + 11) % 12;
-	while (i != end) {
-		frame[numbers[i]][0] = color[0] / j;
-		frame[numbers[i]][1] = color[1] / j;
-		frame[numbers[i]][2] = color[2] / j;
-		i = i + 1 == 12 ? 0 : i + 1;
-		j--;
-	}
-	bt->send_set_display(frame);
-}
-```
+    const uint8_t colors[16][3] = {
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF },
+        { 0x73, 0x00, 0xFF }
+    };
 
-This function mathematically defines an animation as a series of frames that
-can be sent to the display. It is called every 50 milliseconds from the update
-method in [dummy_animation.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/dummy_animation.cpp)
+	const uint8_t init_lcd[2][8] = {
+		{ 'H', 'e', 'l', 'l', 'o', '!', ' ', ' ' },
+		{ ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' }
+	};
 
-It is important to note the delay that is put in between frames. If a device
-attempts to send too many commands over bluetooth, the operating systems
-internal transmission buffer will become full and will throw an exception.
-In general, frames should be sent with a period no less than 20ms.
+	blue_trellis bt = blue_trellis(bluetooth_addr);
 
-```cpp
-void dummy_animation::update()
-{
-	// Get the time between this frame and the last
-	auto now = high_resolution_clock::now();
-	auto duration = duration_cast<milliseconds>(now - *last_time);
 
-	// If 50 milliseconds have passed, update the time.
-	if (duration.count() > 50) {
-		draw_frame(frame_count++);
+	bt.send_set_display(colors);
+	bt.send_set_lcd(init_lcd);
 
-		// Update our last frame time
-		delete last_time;
-		last_time = new high_resolution_clock::time_point(now);
-	}
+    while (1) {
+        struct button_event event;
+        char header = bt.poll_header();
+        if (header == blue_trellis::BUTTON_EVENT_HEADER) {
+            event = bt.get_button_event();
+        }
+    }
 
-	// Delete button presses in the buffer so we don't have a bunch
-	// queued when this animation ends.
-	consume_button_presses();
-}
-```
-
-Handling button events is not much more difficult than writing. One simply uses
-the function poll_header() to check for data in the buffer. Then they call
-the corresponding get command to get the relevant data. From that point, you
-can do whatever you want with the data.
-
-This is even more simple because there is only one type of command that is
-recieved on the PC side: a button event.
-
-For more details see the example from select_scene() in [trellis_main.cpp](https://github.com/JoelKueh/TrellisTicTacToe/blob/master/src/trellis_game/trellis_main.cpp). The function gets the header and uses it
-to select the next scene that will be displayed on the trellis.
-
-```cpp
-scene *select_scene(blue_trellis &bt)
-{
-	char header = bt.poll_header();
-	union blue_trellis::button_event event;
-
-	if (header == blue_trellis::BUTTON_EVENT_HEADER) {
-		event = bt.get_button_event();
-		return get_scene(&bt, event);
-	}
-
-	return nullptr;
+    return 0;
 }
 ```

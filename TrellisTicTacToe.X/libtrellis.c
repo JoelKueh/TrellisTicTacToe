@@ -117,7 +117,7 @@ void set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
     
     prefix[0] = SEESAW_NEOPIXEL_BASE;
     prefix[1] = SEESAW_NEOPIXEL_BUF;
-	prefix[2] = 0;
+    prefix[2] = 0;
     prefix[3] = num * 3;
     data[0] = g;
     data[1] = r;
@@ -159,7 +159,8 @@ void display_show(void)
 
 /**
  * Sends the required initialization commands over the trellis. Also,
- * initializes a 20ms frame timer on TMR3.
+ * initializes a 20ms frame timer on TMR3. By default, tracks every rising
+ * and falling edge.
  * 
  * i2c_init() from libi2c must be called before this function is run.
  */
