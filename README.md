@@ -6,8 +6,7 @@ external hardware with a computer over a Bluetooth serial port via a PIC
 microcontroller.
 
 It doesn't really make sense to have just one public API for this project.
-If anything, that API would be the code that runs on the PC side (libbluetrellis).
-The entire project is documented in this markdown file, but for grading purposes, I
+If anything, that API would be the code that runs on the PC side (libbluetrellis). The entire project is documented in this markdown file, but for grading purposes, I
 recommend that you focus on the libraries libi2c, libtrellis, and libuart
 as sources of our main public library functions.
 
@@ -85,6 +84,34 @@ void i2c_send(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
 Proper users of this library should begin by calling i2c_init() (which
 initializes i2c communication through the I2C2 peripheral). They can then
 call functions to read and send over that bus.
+
+The below example initializes the i2c bus and then manually sends a set led
+command to the NeoTrellis that turns the first pixel white. This could be done
+more easily by using libtrellis.
+
+```c
+int main(void)
+{
+    i2c_init();
+
+    // MANUALLY send a set_led command to the trellis
+    const uint8_t write_prefix[2] = {
+        SEESAW_NEOPIXEL_BASE, SEESAW_NEOPIXEL_BUF
+    };
+    const uint8_t write_data[5] = {
+        0x00, 0x00, 0xFF, 0xFF, 0xFF
+    };
+    i2c_send(TRELLIS_ADDR, write_prefix, 2, write_data, 5);
+
+    while (1);
+
+    return 0;
+}
+```
+
+The second example extends the above to include sending reading the number of
+elements in the trellis keypad buffer. Once again, this would be more easily
+done with the libtrellis library.
 
 ```c
 int main(void)
@@ -327,6 +354,8 @@ int main(void)
 The liblcd library is designed to provide a simple way to initialize and send
 commands to a Sitronix ST7032 LCD.
 
+This library makes use of the I2C2 peripheral.
+
 #### Functions
 
 The functions provided by this library are as follows:
@@ -415,10 +444,12 @@ int main()
 
 ### libuart
 
-The libuart library is designed to simplify sending and recieving of commands
+The libuart library is designed to simplify sending and receiving of commands
 over a UART bridge. In this project, we connect this UART bridge to a HC-06
 UART to Bluetooth converter and connect our device to a PC. This library
 is not specific to that application however, and can be used on its own.
+
+This library makes use of the UART1 peripheral with Rx RP8 and Tx on RP7.
 
 #### Functions
 
@@ -764,7 +795,7 @@ union set_lcd {
 
 #### Functions
 
-The following functions are provided to simplify sending and recieving commands
+The following functions are provided to simplify sending and receiving commands
 
 ```cpp
 /**
@@ -911,7 +942,6 @@ int main()
 
 	blue_trellis bt = blue_trellis(bluetooth_addr);
 
-
 	bt.send_set_display(colors);
 	bt.send_set_lcd(init_lcd);
 
@@ -920,6 +950,11 @@ int main()
         char header = bt.poll_header();
         if (header == blue_trellis::BUTTON_EVENT_HEADER) {
             event = bt.get_button_event();
+            if (event.is_rising) {
+                bt.send_set_led(event.button_num, blue[0], blue[1], blue[2]);
+            } else {
+                bt.send_set_led(event.button_num, red[0], red[1], red[2]);
+            }
         }
     }
 
