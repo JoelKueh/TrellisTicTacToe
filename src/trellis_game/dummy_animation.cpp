@@ -25,7 +25,7 @@ void dummy_animation::update()
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
 
-	// If 500 milliseconds have passed, update the time.
+	// If 50 milliseconds have passed, update the time.
 	if (duration.count() > 50) {
 		draw_frame(frame_count++);
 

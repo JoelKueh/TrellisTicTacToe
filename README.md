@@ -2,26 +2,33 @@ Bluetooth Trellis
 =================
 
 Bluetooth trellis is a collection of libraries that make it easier to connect
-external hardware with a computer over a bluetooth serial port via a PIC
+external hardware with a computer over a Bluetooth serial port via a PIC
 microcontroller.
+
+It doesn't really make sense to have just one public API for this project.
+If anything, that API would be the code that runs on the PC side (libbluetrellis).
+The entire project is documented in this markdown file, but for grading purposes, I
+recommend that you focus on the libraries libi2c, libtrellis, and libuart
+as sources of our main public library functions.
 
 ## PIC
 
-On the PIC side, there are 5 relavent libraries: libi2c, libuart, libtrellis
+On the PIC side, there are 5 relevant libraries: libi2c, libuart, libtrellis
 liblcd, and libuarttrellis.
 
 This code (as a whole) and more generally libuarttrellis is designed to
-use the PIC as the controller for a rgb gamepad that you can connect to over
-bluetooth. All of the other libraries are more general purpose.
+use the PIC as the controller for an RGB game pad that you can connect to over
+Bluetooth. All the other libraries are more general purpose.
 
 The hardware used is as follows
 * [Adafruit NeoTrellis RGB Driver](https://www.adafruit.com/product/3954?gad_source=1)
 * [Adafruit Silicone Elastomer 4x4 Button Keypad](https://www.adafruit.com/product/3954?gad_source=1)
 * [DSD Tech HC-06 Bluetooth Module](https://www.deshide.com/product-details.html?pid=344888&_t=1665215600)
+* [Sitronix ST7032 LCD](https://newhavendisplay.com/content/app_notes/ST7032.pdf)
 
-The DSD Tech website for the HC-06 is incrediby finicky, so the link may be
-broken by the time you read this. The amazon link is better (but the data on
-it is innacurate) [Amazon DSD Tech HC-06](https://www.amazon.com/DSD-TECH-Wireless-Bluetooth-Transceiver/dp/B01FCQZ8VW/ref=sr_1_4?crid=208P4ZDIRYEOR&dib=eyJ2IjoiMSJ9.gciUocboeceE9ntTwzHYX7gzc7ixh5Z_nOpMri1-tgnW8DDNl__6LQRygtPZOXHjueVAFmNkqbBH68apFR5bVoy_tkBo1sK4WEV33K3jbAKIo_V9cZ7lbJpYsRbXcI9EgWoPs6RhQsQw5XTbaJcFVB4q_EFg5wjac7GmtylahSi06nuP4do8LwPVv3LVlToZrwl-2WcMSY3b1lVO68CEjQ.-Gvu3fvRYjdabhY1yzgEARRxwKuTnsx83GJZ15vCkHE&dib_tag=se&keywords=dsd+tech+hc-06&qid=1713815518&sprefix=dsd+tech+hc-0%2Caps%2C114&sr=8-4)
+The DSD Tech website for the HC-06 is incredibly finicky, so the link may be
+broken by the time you read this. The Amazon link is better (but the data on
+it is inaccurate) [Amazon DSD Tech HC-06](https://www.amazon.com/DSD-TECH-Wireless-Bluetooth-Transceiver/dp/B01FCQZ8VW/ref=sr_1_4?crid=208P4ZDIRYEOR&dib=eyJ2IjoiMSJ9.gciUocboeceE9ntTwzHYX7gzc7ixh5Z_nOpMri1-tgnW8DDNl__6LQRygtPZOXHjueVAFmNkqbBH68apFR5bVoy_tkBo1sK4WEV33K3jbAKIo_V9cZ7lbJpYsRbXcI9EgWoPs6RhQsQw5XTbaJcFVB4q_EFg5wjac7GmtylahSi06nuP4do8LwPVv3LVlToZrwl-2WcMSY3b1lVO68CEjQ.-Gvu3fvRYjdabhY1yzgEARRxwKuTnsx83GJZ15vCkHE&dib_tag=se&keywords=dsd+tech+hc-06&qid=1713815518&sprefix=dsd+tech+hc-0%2Caps%2C114&sr=8-4)
 
 Libuarttrellis (the top level library) could be replaced with another library
 that uses a different set of hardware (maybe it interfaces with an led matrix
@@ -32,15 +39,154 @@ In general, the code is designed to be extensible and reusable.
 
 ### libi2c
 
+The libi2c library is designed to provide a unified method for sending and
+receiving data over an i2c bus with the I2C2 peripheral.
+
+#### Functions
+
+libi2c only provides three functions:
+
+```c
+/**
+ * Begins i2c communication with peripheral I2C2 at 100000 baud.
+ */
+void i2c_init(void);
+```
+
+```c
+/**
+ * Executes a blocking read over I2C
+ * @param i2c_addr The address of the thing to read.
+ * @param prefix The I2C prefix (likely address bytes)
+ * @param prefix_len The length of the prefix
+ * @param dest The place to store the result of the read
+ * @param size The size of the read buffer
+ * @param delay The delay between the initialization command and the read.
+ */
+void i2c_read(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
+        uint8_t *dest, uint8_t size, int delay);
+```
+
+```c
+/**
+ * Executes a blocking send over I2C
+ * @param i2c_addr The address of the thing to send
+ * @param prefix The I2C prefix (likely address bytes)
+ * @param prefix_len The length of the prefix
+ * @param data The data to send
+ * @param data_len The length of the data
+ */
+void i2c_send(uint8_t i2c_addr, const uint8_t *prefix, uint8_t prefix_len,
+        const uint8_t *data, uint8_t data_len);
+```
+
+#### Usage
+
+Proper users of this library should begin by calling i2c_init() (which
+initializes i2c communication through the I2C2 peripheral). They can then
+call functions to read and send over that bus.
+
+```c
+i2c_init();
+
+// MANUALLY send a set_led command to the trellis
+const uint8_t write_prefix[2] = {
+    SEESAW_NEOPIXEL_BASE, SEESAW_NEOPIXEL_BUF
+};
+const uint8_t write_data[5] = {
+    0x00, 0x00, 0xFF, 0xFF, 0xFF
+};
+i2c_send(TRELLIS_ADDR, write_prefix, 2, write_data, 5);
+
+// MANUALLY read the number of key events in the trellis
+const uint8_t read_prefix[2] = {
+    SEESAW_KEYPAD_BASE, SEESAW_KEYPAD_COUNT
+};
+uint8_t read_dest;
+i2c_read(TRELLIS_ADDR, read_prefix, 2, read_dest, 1, 500;
+```
+
 ### libtrellis
 
 ### liblcd
+
+The liblcd library is designed to provide a simple way to initialize and send
+commands to a Sitronix ST7032 LCD.
+
+#### Functions
+
+The functions provided by this library are as follows:
+
+```c
+/**
+ * Sends an lcd command over i2c.
+ * @param pkg The payload for the command.
+ */
+void lcd_cmd(uint8_t pkg);
+```
+
+```c
+/**
+ * Initializes the lcd. Must not be called before i2c_init() from libi2c.
+ */
+void lcd_init(void);
+```
+
+```c
+/**
+ * Sends a lcd set cursor command over i2c.
+ * @param row The new row of the cursor.
+ * @param col The new column of the cursor.
+ */
+void lcd_set_cursor(uint8_t row, uint8_t col);
+```
+
+```c
+/**
+ * Sends a putc command to the lcd (sets a single character)
+ * @param c The character to put to the buffer.
+ */
+void lcd_putc(uint8_t c);
+```
+
+```c
+/**
+ * Sends a puts command to the lcd (sets a full string)
+ * @param string The string to be drawn.
+ */
+void lcd_puts(uint8_t string[]);
+```
+
+#### Usage
+
+This library must be used with the library libi2c. Before you can send any
+commands to the lcd, you must initialize both the i2c bus (with i2c_init())
+and the display itself (with lcd_init()). If you wanted to send a string
+to the display to start at row zero, column zero, that would look something
+like this:
+
+```c
+lcd_init();
+lcd_set_cursor(0, 0);
+lcd_puts("Hello!");
+```
+
+If you wanted to send more data than that, all you would simply have to
+chain these commands together.
+
+```c
+lcd_init();
+lcd_set_cursor(0, 0);
+lcd_puts("Hello!");
+lcd_set_cursor(1, 7);
+lcd_putc('a');
+```
 
 ### libuart
 
 The libuart library is designed to simplify sending and recieving of commands
 over a UART bridge. In this project, we connect this UART bridge to a HC-06
-UART to bluetooth converter and connect our device to a PC. This library
+UART to Bluetooth converter and connect our device to a PC. This library
 is not specific to that application however, and can be used on its own.
 
 #### Functions
@@ -413,6 +559,13 @@ union button_event get_button_event();
 
 #### Usage
 
+Before this library can be used, one must simply construct an object.
+The constructor for this class takes one parameter which is the address.
+
+```cpp
+blue_trellis bt = blue_trellis(bluetooth_addr);
+```
+
 Sending commands using this library is relatively self explanatory.
 Calling different send functions queues up commands to be sent over the
 bluetooth that will be sent and handled by the operating system.
@@ -496,7 +649,7 @@ void dummy_animation::update()
 	auto now = high_resolution_clock::now();
 	auto duration = duration_cast<milliseconds>(now - *last_time);
 
-	// If 500 milliseconds have passed, update the time.
+	// If 50 milliseconds have passed, update the time.
 	if (duration.count() > 50) {
 		draw_frame(frame_count++);
 
