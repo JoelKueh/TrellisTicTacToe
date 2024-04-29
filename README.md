@@ -108,6 +108,149 @@ i2c_read(TRELLIS_ADDR, read_prefix, 2, read_dest, 1, 500;
 
 ### libtrellis
 
+The libtrellis library is designed to control a single ADAFRUIT NeoTrellis
+with a PIC24. There is the read and write parts. The write part sends the
+colors to drive the NeoPixels on the NeoTrellis and the read part gets
+button events and sets what is determined to be a button event.
+
+#### Functions
+
+The functions provided by this library are as follows:
+
+```c
+/**
+ * Preforms a blocking delay to wait for the 20ms frame timer.
+ * Resets the frame timer to zero when the function completes.
+ */
+void await_frame(void);
+```
+
+```c
+/**
+ * Sets a keypad event to be tracked or ignored by the trellis.
+ * @param num The number of the key (0-15)
+ * @param edges The edge in question
+ * @param active Whether or not it should be tracked.
+ */
+void set_keypad_event(uint8_t num, uint8_t edge, uint8_t active);
+```
+
+```c
+/**
+  * Reads at most max_size button events into a buffer.
+  * @param buffer The buffer to write into.
+  * @param max_size The maximum number of key_events to read.
+  * @return The actual number of key_events read.
+  */
+int get_button_events(union key_event *buffer, uint8_t max_size);
+```
+
+```c
+/**
+ * Sends a set led command to the trellis.
+ * @param num The led to set.
+ * @param g The green value.
+ * @param r The red value.
+ * @param b The blue value.
+ */
+void set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b);
+```
+
+```c
+/**
+ * Sends a set display command to the trellis.
+ * @param colors An array of colors for each led in GRB format.
+ */
+void set_display(uint8_t colors[16][3]);
+```
+
+```c
+/**
+ * Tells the trellis to update the neopixels with the new values that it has
+ * in it's buffer. This function should be called when you want to see the
+ * new data written by the set_led and set_display commands.
+ */
+void display_show(void);
+```
+```c
+/**
+ * Sends the required initialization commands over the trellis. Also,
+ * initializes a 20ms frame timer on TMR3.
+ * 
+ * i2c_init() from libi2c must be called before this function is run.
+ */
+void trellis_init(void);
+```
+
+#### Usage
+
+This library must be used with the libi2c library. This must be initialized
+before use. Additionally, trellis_init(void) must be called before any
+other function in libtrellis can be called. Note that trellis_init(void)
+sets the button tracking events to rising and falling edges for all of the buttons.
+
+To read the latest button events the code should look like this:
+
+```c
+i2c_init();
+trellis_init();
+int numberEvents;
+union key_event *buffer;
+uint8_t max_size = 16;
+numberEvents = get_button_events(buffer, max_size);
+```
+
+To change the event that is tracked for a button the code should follow:
+
+```c
+i2c_init();
+trellis_init();
+set_keypad_event(0x02, EDGE_FALLING, 0);
+set_keypad_event(0x02, EDGE_RISING, 0);
+```
+
+To set an individual LED to Red on the NeoTrellis the code should look like this:
+
+```c
+i2c_init();
+trellis_init();
+set_led(0x01, 0x00, 0xff, 0x00);
+display_show(void);
+```
+
+To set all of the LEDs on the NeoTrellis to a color the code should be as follows:
+
+```c
+i2c_init();
+trellis_init();
+uint8_t colors[16][3];
+for (int i = 0; i < 16; ++i) {
+    colors[i][0] = 0x26;
+    colors[i][1] = 0x26;
+    colors[i][2] = 0x26;
+}
+set_display(uint8_t colors[16][3]);
+display_show(void);
+```
+
+When the button LEDs are continuously updates the code should be as follows:
+
+```c
+i2c_init();
+trellis_init();
+uint8_t colors[16][3];
+for (int i = 0; i < 16; ++i) {
+    colors[i][0] = 0x26;
+    colors[i][1] = 0x26;
+    colors[i][2] = 0x26;
+}
+while(1) {
+    await_frame(void);
+    set_display(uint8_t colors[16][3]);
+    display_show(void);
+}
+```
+
 ### liblcd
 
 The liblcd library is designed to provide a simple way to initialize and send
