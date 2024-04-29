@@ -1,6 +1,8 @@
 Bluetooth Trellis
 =================
 
+This README is most easily viewed on our [GitHub](https://github.com/JoelKueh/TrellisTicTacToe).
+
 Bluetooth trellis is a collection of libraries that make it easier to connect
 external hardware with a computer over a Bluetooth serial port via a PIC
 microcontroller.
@@ -534,8 +536,8 @@ int main()
     uart_init();
 
     // Send the first command.
-    com_a.is_rising = false;
-    com_a.button_num = 0;
+    com_a.int_data = 3;
+    com_a.char_data = 'c';
     send_command(
         HEADER_A,
         (uint8_t *)com_a,
@@ -613,8 +615,8 @@ int main()
     uart_init();
 
     // Send the first command
-    com_a.is_rising = false;
-    com_a.button_num = 0;
+    com_a.int_data = 3;
+    com_a.char_data = 'c';
     send_command(
         HEADER_A,
         (uint8_t *)com_a,
