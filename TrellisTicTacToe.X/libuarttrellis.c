@@ -185,11 +185,11 @@ void poll_and_update(void)
     await_frame();
     display_show();
     num_events = get_button_events(events, 30);
-    delay_us(500);
     while (num_events--) {
         button.is_rising = key->edge == EDGE_RISING;
         button.button_num = key->num;
         send_button_event(&button);
+	key++;
     }
 }
 

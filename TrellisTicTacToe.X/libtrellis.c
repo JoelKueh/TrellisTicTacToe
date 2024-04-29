@@ -117,7 +117,7 @@ void set_led(uint8_t num, uint8_t g, uint8_t r, uint8_t b)
     
     prefix[0] = SEESAW_NEOPIXEL_BASE;
     prefix[1] = SEESAW_NEOPIXEL_BUF;
-	prefix[2] = 0;
+    prefix[2] = 0;
     prefix[3] = num * 3;
     data[0] = g;
     data[1] = r;
