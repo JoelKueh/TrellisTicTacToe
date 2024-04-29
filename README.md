@@ -12,6 +12,18 @@ If anything, that API would be the code that runs on the PC side (libbluetrellis
 recommend that you focus on the libraries libi2c, libtrellis, and libuart
 as sources of our main public library functions.
 
+## Table of Contents
+
+* [PIC](#pic)
+    * [libi2c](#libi2c)
+    * [libtrellis](#libtrellis)
+    * [liblcd](#liblcd)
+    * [libuart](#libuart)
+    * [libuarttrellis](#libuarttrellis)
+* [PC](#pc)
+    * [libbluetoothserialport](#libbluetoothserialport)
+    * [libbluetrellis](#libbluetrellis)
+
 ## PIC
 
 On the PIC side, there are 5 relevant libraries: libi2c, libuart, libtrellis
